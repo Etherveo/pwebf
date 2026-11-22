@@ -1,3 +1,5 @@
+> **[ARSIP BASELINE `iraweb`]** Pemetaan Figma lama *Ira-IPPL* (gaya Neumorphism). Tidak digunakan untuk UI Minimalist proyek baru; lihat [docs/ui-minimalist-spec.md](ui-minimalist-spec.md).
+
 # Pemetaan Figma — Ira-IPPL (Design canvas)
 
 **Sumber Figma:** https://www.figma.com/design/L36MtFC0W90vyfvZwKcMyl/Ira-IPPL?node-id=0-1&p=f&t=Tswme1GQrTqvp2SG-0

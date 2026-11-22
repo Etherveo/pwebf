@@ -1,32 +1,30 @@
-# AGENTS.md — Ira Stationery (iraweb)
+# AGENTS.md — Pedoman Proyek E-Commerce Baru (Baseline Clone: `iraweb`)
 
 > **Catatan cermin — baca ini dulu:** `AGENTS.md` dan `CLAUDE.md` di root repo ini berisi isi yang **sama persis**. Ini disengaja, bukan dua dokumen yang kebetulan mirip.
-> - AI yang membaca `AGENTS.md` (misalnya Muse) cukup membaca file ini saja.
+> - AI yang membaca `AGENTS.md` cukup membaca file ini saja.
 > - Claude cukup membaca `CLAUDE.md` saja.
 > - Jangan membaca keduanya sebagai dua sumber berbeda, dan jangan menganggap salah satunya lebih baru dari yang lain.
-> - Kalau aturan berubah, ubah **kedua file sekaligus** agar tetap identik. Sumber kebenaran untuk coding adalah file ini di root `iraweb`, dengan `CLAUDE.md` sebagai salinan cerminnya.
-> - Putuskan sejak awal: setiap agen memakai satu file acuannya masing-masing (AGENTS.md atau CLAUDE.md), bukan keduanya sekaligus.
+> - Kalau aturan berubah, ubah **kedua file sekaligus** agar tetap identik.
 
 ## Urutan berlaku (tertinggi ke terendah)
 
-1. Instruksi eksplisit Ren.
-2. Keputusan spesifik Ira di Bagian C.
-3. Aturan generik di Bagian B (§§1–17, penomoran dipertahankan persis, karena PRD mengutip `AGENTS §n`).
-4. Konvensi umum Laravel di Bagian A.
-
-Sumber kebenaran coding setelah disetujui: `AGENTS.md` di root `iraweb` itu sendiri,
-bukan salinan di folder dokumen proyek.
+1. Instruksi eksplisit pemilik proyek dalam percakapan aktif.
+2. Keputusan spesifik proyek baru di **Bagian C** (dan dokumen target di `docs/`).
+3. Aturan rekayasa generik di **Bagian B** (§§1–17).
+4. Konvensi umum Laravel di **Bagian A**.
 
 ---
 
-## A. Catatan kerja Laravel (iraweb)
+## A. Catatan kerja Laravel
 
-Repo ini adalah aplikasi Laravel. Kerjakan dari root `iraweb`, dengan PHP dan Composer yang sudah tersedia di mesin kerja. File ini tidak berisi langkah instalasi.
+Repo ini adalah aplikasi Laravel. Kerjakan dari root repo dengan PHP dan Composer yang tersedia di mesin kerja.
 - Dev: `composer run dev`
-- Build frontend: `npm run build` setelah menambah paket frontend
+- Build frontend: `npm run build` setelah mengubah aset atau menambah paket frontend
 - Tes: Pest, lihat `tests/Pest.php`
-- Jangan commit `vendor/`, `node_modules/`, `public/build`, `.env`, atau `storage/*.key` (sudah di `.gitignore`).
+- Jangan commit `vendor/`, `node_modules/`, `public/build`, `.env`, `database/*.sqlite`, atau `storage/*.key` (sudah di `.gitignore`).
 - Boost bukan prasyarat coding di repo ini dan tidak terinstall; jangan menginstallnya sebagai prasyarat.
+
+---
 
 ## B. Aturan rekayasa generik (dipertahankan §§1–17)
 
@@ -240,53 +238,29 @@ The final report states the outcome, the affected files, the verification perfor
 
 ---
 
-## C. Appendix spesifik Ira Stationery (keputusan yang sudah disepakati)
+## C. Keputusan & Arah Proyek Baru (Transformasi dari Baseline `iraweb`)
 
-Keputusan-keputusan ini mengikat di atas Bagian B dan konvensi Laravel umum. Kalau bertentangan
-dengan dokumen lain, yang berlaku adalah keputusan Ren terbaru, bukan dokumen ini.
+> **Status fase saat ini:** Repo masih berada pada **baseline source code `Etherveo/iraweb`** yang belum diubah. Seluruh rencana perubahan arsitektur, UI, database, dan payment gateway baru dicatat di dokumentasi terlebih dahulu sebelum mengubah kode sumber apa pun.
 
-- **Ruang lingkup: Trend Analytics saja (FR-01–FR-06).** FR-01 dashboard (P0), FR-02 tren (P0),
-  FR-03 funnel viewed → cart → booking → purchase (P0), FR-04 perbandingan periode (P1),
-  FR-05 aktivitas/minat produk (P1), FR-06 kategori/karakteristik (P2). Di luar scope:
-  sistem checkout/pembayaran baru, payment gateway riil, status pembayaran/order otomatis.
-- **Pendekatan simulator.** Sistem asli: katalog, keranjang, beli/batal internal sebagai sumber data
-  analitik. Panel Developer terpisah untuk data eksperimen: bulk akun (maks 100/request),
-  transaksi backdate termasuk periode lampau, funnel lengkap, data simulator bisa diaudit dan di-reset.
-  Pembayaran hanya SIMULATOR: pembeli pilih metode (minimal QRIS, Dana, GoPay, VA BRI/BCA/BNI),
-  QR dibuka lewat kamera/Google Lens ke halaman simulator web yang menampilkan HTTP request/response
-  simulasi. Tidak ada gateway riil, tidak ada logo/warna bank/e-wallet.
-- **Aktor dan guard (3 aktor).** Admin Toko dan Pembeli di guard web (terpisah dari Developer);
-  Developer di guard developer sendiri (tabel developers terpisah). Jangan mencampur guard.
-- **Stack.** Laravel/PHP modular monolith (`laravel/framework ^13.17`, PHP `^8.3` di repo ini)
-  + servis kalkulasi Python terpisah apa adanya (numpy/pandas/scikit-learn) untuk FR-01–FR-06.
-  Laravel kirim data, Python kembalikan hasil. Arsitektur menyisakan ruang untuk gateway riil di masa depan,
-  tapi tidak mengimplementasikannya sekarang.
-- **Tanpa starter kit.** Tidak ada Breeze/Jetstream. Auth dibangun sesuai PRD/blueprint, bukan dari
-  scaffolding starter kit.
-- **Basis data: SQLite saja.** `.env.example` sudah `DB_CONNECTION=sqlite`. Satu file, tanpa server
-  database terpisah. Jangan beralih ke MySQL/PostgreSQL tanpa keputusan baru (dan tanpa sinkronisasi
-  ulang PRD/blueprint).
-- **Zona waktu: WITA saja (Asia/Makassar, UTC+8).** Penyimpanan UTC, pelaporan WITA. Jangan pakai WIB.
-- **Tes: Pest** (`pestphp/pest ^5.3`, dibangun di atas PHPUnit; `tests/Pest.php` sudah ada).
-  Ini memenuhi penulisan blueprint "PHPUnit/Pest" — jangan ganti ke PHPUnit murni tanpa alasan.
-- **Frontend: Blade + Tailwind + Alpine + Chart.js yang dibundel lewat Vite, tanpa CDN.**
-  Visual mengikuti `UI.md` (Neumorphism + Motion, Ira-sentris), bukan `DESIGN.md` generik,
-  kecuali `UI.md` diam soal itu. Bahasa antarmuka Indonesia, mata uang Rp, label SIMULASI di semua
-  data/pembayaran simulator.
-- **Dokumen acuan di repo ini ada di `docs/` (lihat indeks di bawah).** Salinan di folder proyek VM bukan sumber kebenaran repo.
-  PRD/blueprint adalah milik Claude untuk direvisi; jangan merevisi isinya dari sini tanpa
-  instruksi Ren. Figma (Design dan Make) adalah prototipe visual, bukan basis kode Laravel:
-  port visual/alurnya ke Blade, jangan port kode React hasil generate.
-- **Perintah kerja di repo ini (dari root `iraweb`):** `composer run dev` untuk dev server,
-  `npm run build` ulang setiap paket frontend ditambah. Jangan commit `vendor/`, `node_modules/`,
-  `public/build`, `.env`, atau `storage/*.key` (sudah di `.gitignore`).
+Keputusan yang mengikat arah transformasi:
 
-### Dokumen di docs/ (di repo ini, disebut eksplisit dari file root ini)
+- **Tahap saat ini: Dokumentasi & Analisis saja (kecuali diinstruksikan eksplisit untuk mulai coding).** Jangan mengubah source code aplikasi (`app/`, `config/`, `database/`, `resources/`, `routes/`, `python/`, `tests/`) sebelum pemilik proyek memberi lampu hijau masuk ke fase implementasi.
+- **UI: Pergantian total ke Minimalist.** Meninggalkan *Light Neumorphism + Motion* (`docs/UI.md`) menuju desain datar minimalis berbatas tipis dengan kontras tinggi. Rujukan target: `docs/ui-minimalist-spec.md`.
+- **Rebranding dari "Ira".** Nama toko baru sedang didiskusikan. Jangan menaruh nama merek baru secara hardcoded di kode/tampilan; gunakan konfigurasi terpusat dan placeholder `[Nama Toko TBD]` di dokumentasi sampai nama final ditetapkan.
+- **Penghapusan role `developer` dan seluruh subsistem simulasi.** Tidak ada lagi guard `developer`, tabel `developers`, panel `/developer/*`, mesin simulasi `app/Simulation/*`, skrip biodata `python/biodata/*`, maupun halaman/rute simulator pembayaran (`/pay/sim/*`, `SimulatorPaymentAdapter`, `InternalDispatcher`).
+- **Scope e-commerce lebih ringkas + Payment Gateway riil.** Aplikasi hanya melayani **2 aktor** (`pembeli` dan `admin_toko` di guard `web`). Pembayaran diintegrasikan ke payment gateway riil di balik interface `App\Payments\PaymentAdapter` dan endpoint `POST /api/v1/webhooks/payments/{provider}`.
+- **Database benar-benar baru.** Jangan mewarisi atau memigrasi data/file database lama dari `iraweb`. Proyek baru menggunakan database dan skema migrasi bersih dari nol tanpa tabel/kolom simulasi (`docs/database-baru.md`).
+- **Zona waktu & lokal:** Antarmuka berbahasa Indonesia, mata uang Rupiah (`Rp 1.250.000`), zona waktu penyimpanan UTC dan pelaporan WITA (`Asia/Makassar`), kecuali diubah oleh keputusan pemilik proyek.
+- **Tes:** Pest (`pestphp/pest ^5.3`).
 
-- `docs/PRD.md` — ruang lingkup fitur (FR-01–FR-06), milik Claude untuk direvisi; jangan revisi dari sini tanpa instruksi Ren.
-- `docs/blueprint.md` — arsitektur dan kontrak (Laravel + Python, SQLite, WITA), milik Claude untuk direvisi.
-- `docs/Blueprint-Workflow.md` — alur dan peta layar per surface, tanpa backend.
-- `docs/UI.md` — spesifikasi visual utama (Neumorphism + Motion, Ira-sentris).
-- `docs/DESIGN.md` — aturan UI/UX generik, hanya fallback kalau `docs/UI.md` diam soal itu.
-- `docs/discussion.md` — handoff diskusi awal (keputusan, FR, simulator); kalau bertentangan dengan PRD/blueprint terbaru, PRD/blueprint yang berlaku.
-- `docs/payment-gateway-simulator.md` — spesifikasi simulator pembayaran saja (QRIS, Dana, GoPay, VA BRI/BCA/BNI, halaman simulator web, bukan gateway riil).
+### Indeks Dokumen di `docs/`
+
+**Dokumen aktif (target proyek baru):**
+- `docs/README.md` — indeks pemisah dokumen aktif vs arsip baseline `iraweb`.
+- `docs/audit-iraweb.md` — hasil audit kode baseline `Etherveo/iraweb` beserta ketergantungan lintas modul.
+- `docs/roadmap-transformasi.md` — rencana bertahap (Fase 0–6) dan daftar keputusan terbuka (`DEC-01..DEC-06`).
+- `docs/database-baru.md` — spesifikasi skema database baru dari nol.
+- `docs/ui-minimalist-spec.md` — spesifikasi sistem desain Minimalist pengganti Neumorphism.
+
+**Dokumen arsip baseline `iraweb` (hanya referensi kode sebelum refactoring):**
+- `docs/PRD.md`, `docs/blueprint.md`, `docs/Blueprint-Workflow.md`, `docs/ira-system-workflow.md`, `docs/discussion.md`, `docs/payment-gateway-simulator.md`, `docs/UI.md`, `docs/UI-CLAUDE.md`, `docs/figma-mapping.md`, `docs/DESIGN.md`.

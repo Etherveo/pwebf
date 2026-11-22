@@ -1,3 +1,5 @@
+> **[ARSIP BASELINE `iraweb`]** Spesifikasi visual *Light Neumorphism + Motion* untuk *Ira Stationery* akan digantikan total oleh desain Minimalist. Lihat spesifikasi baru di [docs/ui-minimalist-spec.md](ui-minimalist-spec.md).
+
 # UI.md — Ira Stationery: E-commerce dengan Pendekatan Simulator
 
 | Atribut | Isi |

@@ -1,3 +1,5 @@
+> **[ARSIP BASELINE `iraweb`]** Dokumen ini mendeskripsikan arsitektur teknis lama *Ira Stationery* (termasuk Developer, Simulator, SQLite lama). Untuk arah proyek baru, lihat [docs/README.md](README.md), [docs/database-baru.md](database-baru.md), dan [docs/roadmap-transformasi.md](roadmap-transformasi.md).
+
 # Blueprint — Ira Stationery: E-commerce dengan Pendekatan Simulator
 
 | Atribut | Isi |

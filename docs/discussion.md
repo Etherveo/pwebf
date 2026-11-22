@@ -1,3 +1,5 @@
+> **[ARSIP BASELINE `iraweb`]** Catatan diskusi historis proyek simulator *Ira Stationery*. Untuk arah proyek baru (tanpa role developer & simulasi), lihat [docs/README.md](README.md).
+
 # Discussion — Ira Stationery: Sistem E-commerce dengan Pendekatan Simulator
 
 > **Status:** Keputusan final hasil diskusi, 1 November 2026.

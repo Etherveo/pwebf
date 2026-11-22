@@ -1,3 +1,5 @@
+> **[ARSIP BASELINE `iraweb`]** Spesifikasi simulator pembayaran lama. Proyek baru akan menghapus simulator dan mengintegrasikan payment gateway riil; lihat [docs/roadmap-transformasi.md](roadmap-transformasi.md) dan [docs/database-baru.md](database-baru.md).
+
 # Payment Gateway Simulator — Ira Stationery
 
 > **Status:** Spesifikasi pendamping, 1 November 2026.

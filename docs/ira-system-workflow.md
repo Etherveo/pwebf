@@ -1,3 +1,5 @@
+> **[ARSIP BASELINE `iraweb`]** Dokumen UML ini mendeskripsikan sistem lama *Ira Stationery* sebelum transformasi. Untuk hasil audit kode saat ini dan rencana proyek baru, lihat [docs/audit-iraweb.md](audit-iraweb.md) dan [docs/roadmap-transformasi.md](roadmap-transformasi.md).
+
 # Ira Stationery — Alur Kerja Sistem (UML)
 
 > **Ruang lingkup:** Dokumen ini menggambarkan **keseluruhan sistem** Ira Stationery

@@ -1,3 +1,5 @@
+> **[ARSIP BASELINE `iraweb`]** Dokumen ini mendeskripsikan fitur lama *Ira Stationery* (termasuk Developer & Simulator). Untuk arah proyek baru (UI Minimalist, Rebranding, tanpa Developer/Simulasi, Payment Gateway riil, Database baru), lihat [docs/README.md](README.md) dan [docs/roadmap-transformasi.md](roadmap-transformasi.md).
+
 # PRD — Ira Stationery: E-commerce dengan Pendekatan Simulator
 
 | Atribut | Isi |

@@ -1,3 +1,5 @@
+> **[ARSIP BASELINE `iraweb`]** Catatan UI kerja lama (Neumorphism + popup panel teknis 5-ketukan). Untuk UI Minimalist baru, lihat [docs/ui-minimalist-spec.md](ui-minimalist-spec.md).
+
 # UI-CLAUDE.md — private UI working notes (Claude only)
 
 Written 2026-11-06 01:30 WITA, read-only pass. Re-verify against source before acting; these are notes, not authority.

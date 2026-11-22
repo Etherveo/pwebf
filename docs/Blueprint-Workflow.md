@@ -1,3 +1,5 @@
+> **[ARSIP BASELINE `iraweb`]** Dokumen ini mendeskripsikan alur & layar lama *Ira Stationery* (termasuk Panel Developer & Simulator). Untuk arah proyek baru, lihat [docs/README.md](README.md) dan [docs/ui-minimalist-spec.md](ui-minimalist-spec.md).
+
 # Blueprint — Ira Stationery: Workflow Sistem
 
 > **Status:** Draf workflow untuk Figma Make, 2 November 2026.

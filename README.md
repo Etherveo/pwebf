@@ -1,58 +1,46 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# E-Commerce Minimalis (Transformasi dari Baseline `iraweb`)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> **Status saat ini:** **Fase Analisis & Dokumentasi (Source code belum diubah).**  
+> Direktori ini merupakan hasil clone dari [`Etherveo/iraweb`](https://github.com/Etherveo/iraweb) dan disiapkan untuk diarahkan ke repository baru di akun GitHub yang sama. Seluruh source code aplikasi masih berada pada baseline `iraweb` (*Ira Stationery*) sampai tahap refactoring dimulai.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tujuan Akhir Proyek Baru
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. **Pergantian total UI ke Minimalist** — mengganti sistem visual *Light Neumorphism + Motion* (`iraweb`) menjadi antarmuka minimalis yang bersih, datar/berbatas tipis, kontras tinggi, dan bebas efek bayangan ganda.
+2. **Rebranding dari "Ira" ke nama toko baru** — identitas merek *"Ira Stationery"* sedang dalam proses diskusi dan akan digantikan secara terpusat melalui konfigurasi (`APP_NAME` / konfigurasi toko).
+3. **Menghapus role `developer` dan seluruh subsistem simulasi** — menghapus panel developer, mesin generator transaksi/akun simulasi, skrip biodata Python, halaman simulator pembayaran, dan metadata simulasi.
+4. **Scope e-commerce lebih ringkas + integrasi Payment Gateway riil** — memfokuskan aplikasi sebagai web e-commerce yang lebih ramping untuk **Pembeli** dan **Admin Toko**, serta mengganti `SimulatorPaymentAdapter` dengan adapter payment gateway riil (memanfaatkan kontrak `App\Payments\PaymentAdapter` dan `WebhookController` yang sudah ada).
+5. **Database benar-benar baru** — tidak mewarisi atau memigrasi basis data SQLite milik `iraweb`; skema dibangun ulang dari nol tanpa tabel/kolom simulasi dan siap untuk mesin basis data yang dipilih pada proyek baru.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Peta Dokumentasi
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Dokumen Aktif (Proyek Baru & Rencana Transformasi)
+- [docs/README.md](docs/README.md) — Indeks dokumentasi aktif vs arsip baseline `iraweb`.
+- [docs/audit-iraweb.md](docs/audit-iraweb.md) — Audit lengkap isi repo `iraweb` (arsitektur, inventaris file, ketergantungan lintas modul, dan temuan selisih kode vs dokumen lama).
+- [docs/roadmap-transformasi.md](docs/roadmap-transformasi.md) — Rencana bertahap (Fase 0–6) beserta keputusan terbuka sebelum mengubah source code.
+- [docs/database-baru.md](docs/database-baru.md) — Rancangan skema database baru dari nol (tanpa simulasi/developer, siap payment gateway riil).
+- [docs/ui-minimalist-spec.md](docs/ui-minimalist-spec.md) — Spesifikasi sistem visual Minimalist pengganti *Light Neumorphism*.
+- [AGENTS.md](AGENTS.md) & [CLAUDE.md](CLAUDE.md) — Aturan kerja agen AI (keduanya cermin identik).
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Dokumen Baseline Lama (`iraweb` — Hanya Referensi Kode Saat Ini)
+Dokumen-dokumen berikut tetap disimpan di `docs/` sebagai peta kode `iraweb` sebelum refactoring dimulai:
+- `docs/PRD.md`, `docs/blueprint.md`, `docs/Blueprint-Workflow.md`, `docs/ira-system-workflow.md`
+- `docs/discussion.md`, `docs/payment-gateway-simulator.md`
+- `docs/UI.md`, `docs/UI-CLAUDE.md`, `docs/figma-mapping.md`, `docs/DESIGN.md`
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+---
 
-## Agentic Development
+## Kondisi Clone Saat Ini (Belum Diinstalasi / Belum Dimodifikasi)
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+- **Remote Git saat ini:** `origin -> https://github.com/Etherveo/iraweb` (belum diarahkan ke remote baru).
+- **Dependensi & environment lokal:** `vendor/`, `node_modules/`, `.env`, dan file database (`database/*.sqlite`) **belum ada** di hasil clone ini.
+- **Stack baseline yang terpasang di manifest:**
+  - PHP `^8.3` & Laravel Framework `^13.17` (`composer.json`)
+  - Vite `^8.0`, Tailwind CSS `^4.0`, `chart.js ^4.6.1`, `qrcode ^1.5.4` (`package.json`)
+  - Pest `^5.3` untuk pengujian otomatis (`phpunit.xml`)
+  - Python `python/analytics/` (servis HTTP internal port `8001`) dan `python/biodata/` (generator akun simulasi — target hapus).
 
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
-```
-
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+> **Catatan aturan kerja:** Jangan mengubah source code terlebih dahulu sebelum keputusan desain/scope di [docs/roadmap-transformasi.md](docs/roadmap-transformasi.md) disepakati. Saat database disiapkan nanti, buatlah database baru dari awal sesuai [docs/database-baru.md](docs/database-baru.md).
