@@ -32,7 +32,7 @@
 
         <header class="admin-head">
             <div>
-                <p class="admin-eyebrow">Toko Ira &bull; Pesanan</p>
+                <p class="admin-eyebrow">{{ config('store.name') }} &bull; Pesanan</p>
                 <h1 class="admin-title">Pesanan {{ $order->order_number }}</h1>
                 <p class="admin-subtitle">Rincian barang pesanan, pembayaran, dan linimasa status.</p>
             </div>
@@ -134,7 +134,7 @@
                                         </div>
                                     </dl>
                                     <p class="buyer-payment-foot">
-                                        <a class="admin-action-link" href="{{ route('pembayaran.show', $payment) }}">Lihat detail pembayaran &amp; jejak</a>
+                                        <a class="admin-action-link" href="{{ route('pembayaran.show', $payment) }}">Lihat detail pembayaran</a>
                                     </p>
                                 </div>
                             @endforeach

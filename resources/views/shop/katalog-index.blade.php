@@ -5,14 +5,13 @@
          tidak ada asumsi user sudah login, dan daftar tidak punya tombol beli.
          Parameter q dan kategori sama seperti sebelumnya. --}}
     @php
-        $gradients = ['lavender', 'blue', 'purple', 'cyan'];
         $filterAktif = request()->filled('q') || request()->filled('kategori');
     @endphp
     <div class="shop-page">
         <header class="shop-hero">
-            <p class="shop-eyebrow">Toko Ira &bull; Katalog</p>
-            <h1 class="shop-title">Temukan teman untuk idemu.</h1>
-            <p class="shop-lead">Jelajahi alat tulis dan perlengkapan sekolah.</p>
+            <p class="shop-eyebrow">{{ config('store.name') }} &bull; Katalog</p>
+            <h1 class="shop-title">{{ config('store.catalog_headline') }}</h1>
+            <p class="shop-lead">{{ config('store.catalog_description') }}</p>
         </header>
 
         <form method="GET" action="{{ route('katalog') }}" class="shop-search" role="search">
@@ -75,7 +74,7 @@
                             @php($habis = $product->stock_available <= 0)
                             <li class="product-card">
                                 <a class="product-card-link" href="{{ route('produk.show', $product) }}">
-                                    <div class="product-art product-art-{{ $gradients[$product->category_id % 4] ?? 'lavender' }}" aria-hidden="true">
+                                    <div class="product-art" aria-hidden="true">
                                         <span class="product-art-tag">{{ $product->category?->name }}</span>
                                         <span class="product-art-tile">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></svg>

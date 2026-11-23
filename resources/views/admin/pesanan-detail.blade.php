@@ -116,7 +116,7 @@
                                     <span>&mdash; Status: <strong>{{ $payment->statusLabel() }}</strong></span>
                                     <span>&mdash; Nominal: <strong>{{ $payment->formattedAmount() }}</strong></span>
                                     <span>&mdash; Referensi: <code class="admin-code">{{ $payment->reference_code }}</code></span>
-                                    <span>&mdash; <a class="admin-action-link" href="{{ route('admin.pembayaran.show', $payment) }}">Detail &amp; jejak</a></span>
+                                    <span>&mdash; <a class="admin-action-link" href="{{ route('admin.pembayaran.show', $payment) }}">Detail pembayaran</a></span>
                                 </p>
                                 @if ($payment->transitions->isNotEmpty())
                                     <ul class="admin-timeline">

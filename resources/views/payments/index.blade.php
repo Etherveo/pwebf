@@ -15,7 +15,7 @@
     <div class="admin-page">
         <header class="admin-head">
             <div>
-                <p class="admin-eyebrow">Toko Ira &bull; Pembayaran</p>
+                <p class="admin-eyebrow">{{ config('store.name') }} &bull; Pembayaran</p>
                 <h1 class="admin-title">Riwayat Pembayaran</h1>
                 <p class="admin-subtitle">Semua pembayaran milikmu. Status hanya dapat dilihat, bukan diedit.</p>
             </div>
@@ -80,7 +80,7 @@
                                     {{ $payment->created_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA
                                 </td>
                                 <td data-label="Aksi">
-                                    <a class="admin-action-link" href="{{ route('pembayaran.show', $payment) }}">Detail &amp; jejak</a>
+                                    <a class="admin-action-link" href="{{ route('pembayaran.show', $payment) }}">Detail</a>
                                 </td>
                             </tr>
                         @endforeach

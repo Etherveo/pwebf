@@ -14,7 +14,7 @@
 
         <header class="admin-head">
             <div>
-                <p class="admin-eyebrow">Toko Ira &bull; Pembayaran</p>
+                <p class="admin-eyebrow">{{ config('store.name') }} &bull; Pembayaran</p>
                 <h1 class="admin-title">Pembayaran</h1>
                 <p class="admin-subtitle">Ikuti instruksi di bawah ini untuk menyelesaikan pembayaran pesananmu.</p>
             </div>
@@ -40,7 +40,7 @@
                         <p class="pay-sim-caption"><strong>Nomor VA — bukan nomor rekening.</strong></p>
                         <div class="pay-va-row">
                             <p class="va-number"><strong>{{ $payment->formattedReference() }}</strong></p>
-                            <button type="button" class="btn-secondary" onclick="navigator.clipboard.writeText('{{ $payment->reference_code }}').then(() => { this.textContent = 'Tersalin'; });">Salin</button>
+                            <button type="button" class="btn-secondary" data-copy-text="{{ $payment->reference_code }}" data-copy-label="Salin">Salin</button>
                         </div>
                     </div>
 
@@ -80,7 +80,7 @@
                 <dl class="admin-kv-list">
                     <div class="admin-kv-row">
                         <dt class="admin-kv-row-label">Nama toko</dt>
-                        <dd class="admin-kv-row-val"><strong>Ira Stationery</strong></dd>
+                        <dd class="admin-kv-row-val"><strong>{{ config('store.name') }}</strong></dd>
                     </div>
                     <div class="admin-kv-row">
                         <dt class="admin-kv-row-label">Nomor pesanan</dt>

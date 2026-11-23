@@ -102,7 +102,7 @@
                                     <span class="admin-cell-nowrap">{{ $payment->created_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
                                 </td>
                                 <td data-label="Aksi">
-                                    <a class="admin-action-link" href="{{ route('admin.pembayaran.show', $payment) }}">Detail &amp; jejak</a>
+                                    <a class="admin-action-link" href="{{ route('admin.pembayaran.show', $payment) }}">Detail</a>
                                 </td>
                             </tr>
                         @endforeach

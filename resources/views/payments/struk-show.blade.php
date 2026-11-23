@@ -1,13 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- UI polish Tahap 7 (UI.md §9.3, §10, §16, referensi Figma 3:106093).
-         Label STRUK SIMULASI — bukan bukti pembayaran sah tetap tercetak
-         bersama rincian barang; tombol Cetak Struk (window.print) dipertahankan. --}}
     <div class="admin-page pay-receipt-wrap">
         <header class="admin-head no-print">
             <div>
-                <p class="admin-eyebrow">Toko Ira &bull; Pembayaran</p>
+                <p class="admin-eyebrow">{{ config('store.name') }} &bull; Pembayaran</p>
                 <h1 class="admin-title">Struk Pembayaran</h1>
                 <p class="admin-subtitle">Pratinjau dokumen cetak struk pembayaran pesanan.</p>
             </div>
@@ -18,7 +15,7 @@
         </header>
 
         <article class="card receipt-sheet" aria-label="Struk pembayaran">
-            <p class="receipt-store"><strong>Ira Stationery — Gorontalo</strong></p>
+            <p class="receipt-store"><strong>{{ config('store.name') }}{{ config('store.location') ? ' — '.config('store.location') : '' }}</strong></p>
             <p class="receipt-caption">Bukti pembayaran pesanan toko.</p>
 
             <dl class="admin-kv-list receipt-meta">
@@ -36,7 +33,7 @@
                 </div>
                 <div class="admin-kv-row">
                     <dt class="admin-kv-row-label">Dibayar</dt>
-                    <dd class="admin-kv-row-val">{{ $payment->paid_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
+                    <dd class="admin-kv-row-val">{{ $payment->paid_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} {{ config('store.timezone_label') }}</dd>
                 </div>
             </dl>
 

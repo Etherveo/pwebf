@@ -6,13 +6,12 @@
          threshold 3 unit berbayar dalam 30 hari terakhir),
          Terbaru, dan Teratas (dengan tombol "Lihat selengkapnya" ke /katalog).
          Tidak ada form beli dan tidak mencatat event view. --}}
-    @php($gradients = ['lavender', 'blue', 'purple', 'cyan'])
     <div class="shop-page">
         <header class="shop-hero home-hero">
             <div>
-                <p class="shop-eyebrow">Ira Stationery &bull; Gorontalo</p>
-                <h1 class="shop-title">Keperluan kecil untuk ide besar.</h1>
-                <p class="shop-lead">Pilihan buku, alat tulis, dan perlengkapan sekolah untuk menemani aktivitasmu setiap hari.</p>
+                <p class="shop-eyebrow">{{ config('store.name') }}{{ config('store.location') ? ' • '.config('store.location') : '' }}</p>
+                <h1 class="shop-title">{{ config('store.hero_headline') }}</h1>
+                <p class="shop-lead">{{ config('store.hero_description') }}</p>
             </div>
             <div class="home-hero-actions">
                 <a class="btn-primary" href="{{ route('katalog') }}">Jelajahi Katalog</a>
@@ -32,7 +31,7 @@
                         @php($habis = $product->stock_available <= 0)
                         <li class="product-card">
                             <a class="product-card-link" href="{{ route('produk.show', $product) }}">
-                                <div class="product-art product-art-{{ $gradients[$product->category_id % 4] ?? 'lavender' }}" aria-hidden="true">
+                                <div class="product-art" aria-hidden="true">
                                     <span class="product-art-tag">{{ $product->category?->name }}</span>
                                     <span class="product-art-tile">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></svg>
@@ -73,7 +72,7 @@
                         @php($habis = $product->stock_available <= 0)
                         <li class="product-card">
                             <a class="product-card-link" href="{{ route('produk.show', $product) }}">
-                                <div class="product-art product-art-{{ $gradients[$product->category_id % 4] ?? 'lavender' }}" aria-hidden="true">
+                                <div class="product-art" aria-hidden="true">
                                     <span class="product-art-tag">{{ $product->category?->name }}</span>
                                     <span class="product-art-tile">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></svg>
@@ -118,7 +117,7 @@
                         @php($habis = $product->stock_available <= 0)
                         <li class="product-card">
                             <a class="product-card-link" href="{{ route('produk.show', $product) }}">
-                                <div class="product-art product-art-{{ $gradients[$product->category_id % 4] ?? 'lavender' }}" aria-hidden="true">
+                                <div class="product-art" aria-hidden="true">
                                     <span class="product-art-tag">{{ $product->category?->name }}</span>
                                     <span class="product-art-tile">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></svg>

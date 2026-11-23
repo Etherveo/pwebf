@@ -9,15 +9,14 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
-                }),
-                // UI.md §3: Manrope untuk judul/tombol/angka, Inter untuk isi.
-                bunny('Manrope', {
-                    weights: [600, 700, 800],
-                }),
                 bunny('Inter', {
                     weights: [400, 500, 600],
+                }),
+                bunny('Plus Jakarta Sans', {
+                    weights: [600, 700, 800],
+                }),
+                bunny('JetBrains Mono', {
+                    weights: [400, 500],
                 }),
             ],
         }),

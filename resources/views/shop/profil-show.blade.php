@@ -4,7 +4,7 @@
     <div class="admin-page">
         <header class="admin-head">
             <div>
-                <p class="admin-eyebrow">Toko Ira &bull; Akun Pembeli</p>
+                <p class="admin-eyebrow">{{ config('store.name') }} &bull; Akun Pembeli</p>
                 <h1 class="admin-title">Profil Saya</h1>
                 <p class="admin-subtitle">Kelola informasi pribadi dan alamat Anda.</p>
             </div>
@@ -104,7 +104,7 @@
 
             <aside class="card admin-panel" aria-label="Pintasan akun">
                 <h2 class="admin-section-title">Pintasan Akun</h2>
-                <p class="admin-hint">Akses cepat ke aktivitas belanja Anda di Ira Stationery.</p>
+                <p class="admin-hint">Akses cepat ke aktivitas belanja Anda di {{ config('store.name') }}.</p>
                 <div class="admin-form-actions" style="flex-direction: column; align-items: stretch;">
                     <a class="btn-secondary" href="{{ route('pesanan.index') }}">Riwayat Pesanan</a>
                     <a class="btn-secondary" href="{{ route('pembayaran.index') }}">Riwayat Pembayaran</a>

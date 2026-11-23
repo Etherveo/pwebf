@@ -11,7 +11,7 @@
 
         <header class="admin-head">
             <div>
-                <p class="admin-eyebrow">Toko Ira &bull; Akun Pembeli</p>
+                <p class="admin-eyebrow">{{ config('store.name') }} &bull; Akun Pembeli</p>
                 <h1 class="admin-title">Ubah Profil &amp; Alamat</h1>
                 <p class="admin-subtitle">Perbarui informasi biodata dan alamat Anda.</p>
             </div>

@@ -147,12 +147,12 @@ test('Unified login rejects wrong-actor credentials with the same generic messag
     $this->assertGuest('developer');
 });
 
-test('Legacy separate login URLs redirect to the unified form with actor pre-selected', function () {
+test('Legacy separate login URLs redirect to the unified form without rendering Developer tab in UI', function () {
     $this->get('/admin/masuk')->assertRedirect('/masuk?aktor=admin_toko');
     $this->get('/developer/masuk')->assertRedirect('/masuk?aktor=developer');
-    $this->get('/masuk?aktor=admin_toko')->assertOk()->assertSee('Admin Toko');
-    $this->get('/masuk?aktor=developer')->assertOk()->assertSee('Developer');
-    $this->get('/masuk')->assertOk()->assertSee('Pembeli');
+    $this->get('/masuk?aktor=admin_toko')->assertOk()->assertSee('Admin Toko')->assertDontSee('Developer');
+    $this->get('/masuk?aktor=developer')->assertOk()->assertDontSee('Developer')->assertSee('Pembeli')->assertSee('Admin Toko');
+    $this->get('/masuk')->assertOk()->assertSee('Pembeli')->assertDontSee('Developer');
 });
 
 test('ACC-06 logout is POST only and logging out web does not log out developer', function () {

@@ -1,78 +1,255 @@
-/* UI.md §2.5 — single source of CSS tokens (M0, variables only).
-   No Figma images are copied here. Full Neumorphism component polish
-   is a later task; M0/M1 views use only these variables + simple classes. */
+/* Sistem Token Minimalist — Flat + Hairline kontras tinggi
+   Menggantikan palet Light Neumorphism lavender sebelumnya. */
 :root {
-  --color-primary: #6655F5;
-  --color-primary-hover: #5745E8;
-  --color-primary-active: #4938D4;
-  --color-primary-light: #E8E5FF;
-  --color-primary-soft: #F0EEFF;
-  --color-background: #E9EBF8;
-  --color-background-soft: #EFF0FA;
-  --color-surface: #EAECF8;
-  --color-surface-light: #F4F5FC;
-  --color-surface-dark: #DDE1F1;
-  --color-text-primary: #171A36;
-  --color-text-secondary: #515A8C;
-  --color-text-muted: #858CAD;
-  --color-text-disabled: #AEB3CA;
-  --color-blue: #438BFA;
-  --color-purple: #8875FA;
-  --color-cyan: #55C9D5;
-  --color-green: #25B993;
-  --color-orange: #F5A443;
-  --color-red: #E76B82;
-  --shadow-xs: 3px 3px 6px #D2D6E7, -3px -3px 6px #FFFFFF;
-  --shadow-sm: 5px 5px 10px #D1D5E7, -5px -5px 10px #FFFFFF;
-  --shadow-md: 8px 8px 16px #CDD2E5, -8px -8px 16px #FFFFFF;
-  --shadow-lg: 12px 12px 24px #CBD0E3, -12px -12px 24px #FFFFFF;
-  --shadow-inset: inset 4px 4px 8px #D1D5E7, inset -4px -4px 8px #FFFFFF;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 24px;
-  --radius-2xl: 30px;
-  --font-heading: "Manrope", sans-serif;
-  --font-body: "Inter", sans-serif;
-  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Latar & permukaan */
+  --bg-page: #FFFFFF;
+  --bg-subtle: #F9FAFB;
+  --bg-surface: #FFFFFF;
+  --bg-muted: #F3F4F6;
+
+  /* Garis batas */
+  --border-subtle: #E5E7EB;
+  --border-strong: #D1D5DB;
+
+  /* Teks */
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #6B7280;
+  --text-disabled: #9CA3AF;
+
+  /* Aksen utama monochrome slate */
+  --accent: #111827;
+  --accent-hover: #1F2937;
+  --accent-active: #030712;
+  --accent-foreground: #FFFFFF;
+  --accent-soft: #F3F4F6;
+
+  /* Semantik status (selalu dipasangkan dengan teks/ikon) */
+  --status-success-text: #065F46;
+  --status-success-bg: #ECFDF5;
+  --status-success-border: #A7F3D0;
+
+  --status-warning-text: #92400E;
+  --status-warning-bg: #FFFBEB;
+  --status-warning-border: #FDE68A;
+
+  --status-danger-text: #991B1B;
+  --status-danger-bg: #FEF2F2;
+  --status-danger-border: #FECACA;
+
+  --status-info-text: #1E40AF;
+  --status-info-bg: #EFF6FF;
+  --status-info-border: #BFDBFE;
+
+  --status-muted-text: #4B5563;
+  --status-muted-bg: #F3F4F6;
+  --status-muted-border: #E5E7EB;
+
+  /* Tipografi */
+  --font-heading: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Radius & elevasi minimalist */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-pill: 9999px;
+
+  --shadow-none: none;
+  --shadow-dropdown: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-modal: 0 10px 25px rgba(0, 0, 0, 0.08);
+
+  /* Gerak halus fungsional */
+  --transition-fast: 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Alias kompatibilitas ringan */
+  --color-primary: var(--accent);
+  --color-background: var(--bg-page);
+  --color-surface: var(--bg-surface);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-red: #DC2626;
+  --color-green: #059669;
+  --color-orange: #D97706;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--color-background);
-  color: var(--color-text-primary);
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--text-primary);
   font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 { font-family: var(--font-heading); }
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+a {
+  color: inherit;
+}
+
 .card {
-  background: var(--color-surface);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   padding: 1.5rem;
 }
-.btn-primary {
-  background: var(--color-primary);
-  color: #fff;
-  border: 0;
-  border-radius: var(--radius-md);
-  padding: 0.6rem 1.2rem;
+
+.btn-primary,
+.btn-secondary,
+.btn-danger-ghost,
+.btn-ghost-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
 }
-.btn-primary:hover { background: var(--color-primary-hover); }
+
+.btn-primary {
+  min-height: 42px;
+  padding: 0.625rem 1.125rem;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border: 1px solid var(--accent);
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.btn-primary:active {
+  background: var(--accent-active);
+}
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  min-height: 42px;
+  padding: 0.625rem 1.125rem;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+}
+.btn-secondary:hover {
+  background: var(--bg-subtle);
+  border-color: var(--text-primary);
+}
+.btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-ghost-sm {
+  min-height: 36px;
+  padding: 0.375rem 0.75rem;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.8125rem;
+}
+.btn-ghost-sm:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+}
+
+.btn-danger-ghost {
+  min-height: 36px;
+  padding: 0.375rem 0.75rem;
+  background: var(--bg-surface);
+  color: var(--status-danger-text);
+  border: 1px solid var(--status-danger-border);
+  font-size: 0.8125rem;
+}
+.btn-danger-ghost:hover {
+  background: var(--status-danger-bg);
+}
+
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-ghost-sm:focus-visible,
+.btn-danger-ghost:focus-visible,
+.input:focus-visible,
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .input {
   width: 100%;
-  border: 1px solid #DCE0F0;
-  border-radius: var(--radius-md);
-  padding: 0.6rem 0.8rem;
-  background: var(--color-surface-light);
-  box-shadow: var(--shadow-inset);
-}
-.alert-error { color: var(--color-red); }
-.alert-success { color: var(--color-green); }
-.badge-simulasi {
-  background: #FFF0DA;
-  color: var(--color-orange);
+  min-height: 42px;
+  padding: 0.5625rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  padding: 0.1rem 0.5rem;
-  font-size: 0.8rem;
+  transition: border-color var(--transition-fast);
+}
+.input:hover:not(:disabled):not([readonly]) {
+  border-color: var(--border-strong);
+}
+.input[aria-invalid="true"] {
+  border-color: var(--color-red);
+}
+.input:disabled,
+.input[readonly] {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.alert-success,
+.alert-error,
+.alert {
+  max-width: 72rem;
+  margin: 1rem auto 0;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.alert-success {
+  background: var(--status-success-bg);
+  border-color: var(--status-success-border);
+  color: var(--status-success-text);
+}
+.alert-error {
+  list-style-position: inside;
+  background: var(--status-danger-bg);
+  border-color: var(--status-danger-border);
+  color: var(--status-danger-text);
+}
+.alert {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
 }

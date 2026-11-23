@@ -7,7 +7,7 @@
     <div class="admin-page pay-result-wrap">
         <header class="admin-head">
             <div>
-                <p class="admin-eyebrow">Toko Ira &bull; Pembayaran</p>
+                <p class="admin-eyebrow">{{ config('store.name') }} &bull; Pembayaran</p>
                 <p class="admin-subtitle">Status hasil transaksi pembayaran pesananmu.</p>
             </div>
         </header>
@@ -55,7 +55,6 @@
                 <div class="pay-cta-stack">
                     <a class="btn-primary buyer-cta-block" href="{{ route('pesanan.show', $order) }}">Lihat detail pesanan</a>
                     <a class="btn-secondary buyer-cta-block" href="{{ route('pembayaran.struk', $payment) }}">Lihat struk</a>
-                    <!-- <a class="btn-secondary buyer-cta-block" href="{{ route('pembayaran.show', $payment) }}">Lihat jejak HTTP</a> -->
                 </div>
             @elseif ($payment->status === 'failed')
                 <div class="pay-result-icon is-danger" aria-hidden="true">
@@ -120,7 +119,7 @@
 
                 <div class="pay-cta-stack">
                     <a class="btn-secondary buyer-cta-block" href="{{ route('pesanan.show', $order) }}">Lihat detail pesanan</a>
-                    <a class="btn-secondary buyer-cta-block" href="{{ route('pembayaran.show', $payment) }}">Lihat jejak HTTP</a>
+                    <a class="btn-secondary buyer-cta-block" href="{{ route('pembayaran.show', $payment) }}">Lihat detail pembayaran</a>
                 </div>
             @else
                 <div class="pay-result-icon is-warning" aria-hidden="true">
@@ -158,7 +157,7 @@
                 <div class="pay-cta-stack">
                     <a class="btn-primary buyer-cta-block" href="{{ route('katalog') }}">Kembali ke katalog</a>
                     <a class="btn-secondary buyer-cta-block" href="{{ route('pesanan.index') }}">Lihat riwayat pesanan</a>
-                    <a class="btn-secondary buyer-cta-block" href="{{ route('pembayaran.show', $payment) }}">Lihat jejak HTTP</a>
+                    <a class="btn-secondary buyer-cta-block" href="{{ route('pembayaran.show', $payment) }}">Lihat detail pembayaran</a>
                 </div>
             @endif
         </div>

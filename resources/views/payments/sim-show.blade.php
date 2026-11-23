@@ -65,7 +65,7 @@
                     <dd class="admin-kv-row-val">{{ $payment->expires_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
                 </div>
                 <div class="admin-kv-row">
-                    <dt class="admin-kv-row-label" data-trace-trigger="sim-trace-popup">Status pembayaran</dt>
+                    <dt class="admin-kv-row-label">Status pembayaran</dt>
                     <dd class="admin-kv-row-val"><strong>{{ $payment->statusLabel() }}</strong></dd>
                 </div>
             </dl>
@@ -110,20 +110,6 @@
             </div>
         </div>
 
-        <div class="trace-popup" id="sim-trace-popup" hidden>
-            <div class="trace-popup-backdrop" data-trace-close></div>
-            <div class="trace-popup-dialog" role="dialog" aria-modal="true" aria-label="Detail teknis pembayaran" tabindex="-1">
-                <button type="button" class="trace-popup-x" data-trace-close aria-label="Tutup">×</button>
-
-                <div class="trace-popup-gate" data-trace-stage="gate">
-                    <button type="button" class="btn-primary" data-trace-expand>Lihat detail teknis</button>
-                </div>
-
-                <div class="trace-popup-content" data-trace-stage="panel" hidden>
-                    @include('payments._panel', ['payment' => $payment, 'panel' => $panel])
-                </div>
-            </div>
-        </div>
     </div>
 
     @if ($payment->status === 'pending' && now()->lessThan($payment->expires_at))

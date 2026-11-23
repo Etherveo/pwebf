@@ -31,7 +31,7 @@ selalu "Belum dapat dihitung" — modul tidak menghitungnya. --}}
             </div>
             <div class="analytics-state-body">
                 <h2 class="admin-section-title">Belum ada data pada periode ini</h2>
-                <p class="analytics-note">Tidak ada penjualan pada periode ini. Ubah periode di atas, atau isi data lewat Sistem Asli dan panel Developer.</p>
+                <p class="analytics-note">Tidak ada penjualan pada periode ini. Ubah periode di atas untuk melihat rentang tanggal lainnya.</p>
             </div>
         </div>
     @else
@@ -96,7 +96,7 @@ selalu "Belum dapat dihitung" — modul tidak menghitungnya. --}}
                 $category['warnings'] ?? [],
                 $compare['warnings'] ?? [],
             )));
-            $catColors = ['#6655F5', '#2E9E6B', '#D97706', '#0284C7', '#DB2777', '#6D28D9'];
+            $catColors = ['#111827', '#059669', '#D97706', '#2563EB', '#DB2777', '#4B5563'];
             $maxMatrixUnit = ! empty($matrix)
                 ? max(1, max(array_map(fn ($r) => max((int) ($r['units_sold']['a'] ?? 0), (int) ($r['units_sold']['b'] ?? 0)), $matrix)))
                 : 1;

@@ -7,7 +7,7 @@
     <div class="admin-page">
         <header class="admin-head">
             <div>
-                <p class="admin-eyebrow">Toko Ira &bull; Keranjang</p>
+                <p class="admin-eyebrow">{{ config('store.name') }} &bull; Keranjang</p>
                 <h1 class="admin-title">Keranjang</h1>
                 <p class="admin-subtitle">
                     @if ($items->isEmpty())

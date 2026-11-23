@@ -61,7 +61,7 @@
                             <dd class="admin-kv-row-val">{{ $payment->user->name }} ({{ $payment->user->email }})</dd>
                         </div>
                         <div class="admin-kv-row">
-                            <dt class="admin-kv-row-label" data-trace-trigger="admin-trace-popup">Status pesanan</dt>
+                            <dt class="admin-kv-row-label">Status pesanan</dt>
                             <dd class="admin-kv-row-val">
                                 <span class="status-chip {{ $orderChips[$order->status] ?? 'status-chip-muted' }}">
                                     <span>{{ $order->statusLabel() }}</span>
@@ -124,19 +124,21 @@
             </div>
         </div>
 
-        <div class="trace-popup" id="admin-trace-popup" hidden>
-            <div class="trace-popup-backdrop" data-trace-close></div>
-            <div class="trace-popup-dialog" role="dialog" aria-modal="true" aria-label="Detail teknis pembayaran" tabindex="-1">
-                <button type="button" class="trace-popup-x" data-trace-close aria-label="Tutup">×</button>
-
-                <div class="trace-popup-gate" data-trace-stage="gate">
-                    <button type="button" class="btn-primary" data-trace-expand>Lihat detail teknis</button>
-                </div>
-
-                <div class="trace-popup-content" data-trace-stage="panel" hidden>
-                    @include('payments._panel', ['payment' => $payment, 'panel' => $panel])
-                </div>
-            </div>
-        </div>
+        <section class="card admin-panel" aria-labelledby="admin-payment-timeline">
+            <h2 class="admin-section-title" id="admin-payment-timeline">Timeline Transisi Status</h2>
+            @if ($panel['transitions']->isEmpty())
+                <p class="admin-hint">Belum ada transisi status tercatat.</p>
+            @else
+                <ul class="admin-timeline">
+                    @foreach ($panel['transitions'] as $transition)
+                        <li>
+                            {{ $transition->occurred_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} {{ config('store.timezone_label') }} —
+                            {{ $transition->from_status ? (\App\Models\Payment::STATUS_LABELS[$transition->from_status] ?? $transition->from_status) : '—' }} →
+                            <strong>{{ \App\Models\Payment::STATUS_LABELS[$transition->to_status] ?? $transition->to_status }}</strong>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </section>
     </div>
 @endsection

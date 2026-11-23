@@ -26,7 +26,7 @@ nol yang menyesatkan. --}}
             </div>
             <div class="analytics-state-body">
                 <h2 class="admin-section-title">Belum ada data pada periode ini</h2>
-                <p class="analytics-note">Tidak ada penjualan berbayar antara {{ $dari }} dan {{ $sampai }}. Ubah periode di atas, atau isi data lewat Sistem Asli dan panel Developer.</p>
+                <p class="analytics-note">Tidak ada penjualan berbayar antara {{ $dari }} dan {{ $sampai }}. Ubah periode di atas untuk melihat rentang tanggal lainnya.</p>
             </div>
         </div>
     @else

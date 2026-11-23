@@ -17,7 +17,7 @@
     <div class="admin-page">
         <header class="admin-head">
             <div>
-                <p class="admin-eyebrow">Toko Ira &bull; Pesanan</p>
+                <p class="admin-eyebrow">{{ config('store.name') }} &bull; Pesanan</p>
                 <h1 class="admin-title">Pesanan Saya</h1>
                 <p class="admin-subtitle">Pantau status dan buka rincian setiap pesananmu.</p>
             </div>

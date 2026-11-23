@@ -14,7 +14,7 @@
 
         <header class="admin-head">
             <div>
-                <p class="admin-eyebrow">Toko Ira &bull; Checkout</p>
+                <p class="admin-eyebrow">{{ config('store.name') }} &bull; Checkout</p>
                 <h1 class="admin-title">Checkout</h1>
                 <p class="admin-subtitle">Periksa barang pesananmu, lalu pilih satu metode pembayaran.</p>
             </div>
@@ -60,7 +60,7 @@
 
                     <div class="card admin-panel">
                         <h2 class="admin-section-title">Jadwal pengambilan</h2>
-                        <p class="admin-hint">Pesanan diambil di toko Ira Stationery. Pilih tanggal dan jam pengambilan sebelum memilih metode pembayaran.</p>
+                        <p class="admin-hint">Pesanan diambil di toko {{ config('store.name') }}. Pilih tanggal dan jam pengambilan sebelum memilih metode pembayaran.</p>
                         <div class="admin-field-grid">
                             <div class="admin-field">
                                 <label for="pickup_date" class="admin-label">Tanggal pengambilan</label>

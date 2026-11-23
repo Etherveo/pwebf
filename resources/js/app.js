@@ -1,31 +1,6 @@
-// QR pembayaran simulasi (M3b, script QR Ren — package npm `qrcode`).
-// Halaman instruksi membawa URL sim di [data-qr-url]; script ini
-// menggambar QR-nya (PNG data URL, scale 8 seperti script bot WA Ren)
-// ke <img class="qr-image"> di dalam wadah yang sama. Bila JS mati atau
-// gagal, fallback teks server (TextQrRenderer) tetap tampil.
 import { toDataURL } from 'qrcode';
-
-// Grafik analitik (M5 FR-01/FR-03, Chart.js dibundel lewat Vite — tanpa
-// CDN, sesuai AGENTS.md). `chart.js/auto` mendaftarkan semua komponen
-// yang dipakai halaman analitik (line + bar).
 import Chart from 'chart.js/auto';
 
-// Salin dari panel jejak HTTP (M3c PAY-40/41). Tombol membawa
-// [data-copy-target="<id elemen <pre>"] dan [data-copy-label="<label
-// awal>"]; teks yang disalin adalah isi persis elemen target
-// (textContent), sama dengan yang tampil di layar. navigator.clipboard
-// butuh konteks aman (https/localhost), jadi di host LAN (http)
-// dipakai fallback textarea + execCommand agar salin tetap jalan
-// dari HP. Tanpa bundle baru tombol tidak melakukan apa-apa:
-// jalankan `npm run build` setelah pull.
-//
-// Perbaikan fallback HP (M3c, 2026-11-05): versi lama hanya memanggil
-// ta.select() — di browser HP (terutama iOS Safari) itu saja tidak
-// cukup: textarea harus difokuskan DAN seleksinya dibuat eksplisit
-// dengan setSelectionRange, kalau tidak execCommand('copy') gagal
-// diam-diam atau menyalin kosong. readOnly mencegah keyboard muncul
-// saat focus di iOS. Inilah kenapa "Salin cURL" gagal dari HP
-// sementara "Salin JSON" (yang kebetulan lolos seleksi) jalan.
 function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
         return navigator.clipboard.writeText(text);
@@ -55,16 +30,13 @@ function copyText(text) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-copy-target]').forEach((btn) => {
+    // Salin kode/teks referensi pembayaran
+    document.querySelectorAll('[data-copy-text]').forEach((btn) => {
         btn.addEventListener('click', () => {
-            const target = document.getElementById(btn.getAttribute('data-copy-target'));
-            if (!target) return;
+            const value = btn.getAttribute('data-copy-text') || '';
             const label = btn.getAttribute('data-copy-label') || btn.textContent;
-            // textContent, bukan innerText: untuk isi <pre> keduanya
-            // sama, tapi textContent tidak tergantung layout/visibilitas
-            // (innerText mengembalikan "" bila elemennya tersembunyi —
-            // relevan saat panel nanti masuk ke popup tersembunyi).
-            copyText(target.textContent).then(() => {
+            if (!value) return;
+            copyText(value).then(() => {
                 btn.textContent = 'Tersalin';
                 setTimeout(() => { btn.textContent = label; }, 2000);
             }).catch(() => {
@@ -74,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // QR Code pembayaran client-side (dengan fallback teks server)
     document.querySelectorAll('[data-qr-url]').forEach((slot) => {
         const url = slot.getAttribute('data-qr-url');
         const img = slot.querySelector('img.qr-image');
@@ -87,17 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (fallback) fallback.hidden = true;
             })
             .catch(() => {
-                // Biarkan fallback teks tampil; halaman tetap berfungsi
-                // lewat tautan "Buka Halaman Simulasi Pembayaran".
+                // Fallback teks server tetap tampil
             });
     });
-});
 
-// Eye toggle kata sandi (UI polish Tahap 1, halaman /masuk). Tombol membawa
-// [data-password-toggle="<id input>"] dan tersembunyi lewat atribut hidden
-// sampai script ini berjalan, jadi tanpa JS formulir tetap normal. Tidak
-// menyentuh nilai atau pengiriman field: hanya mengganti type password/text.
-document.addEventListener('DOMContentLoaded', () => {
+    // Toggle tampilkan/sembunyikan kata sandi
     document.querySelectorAll('[data-password-toggle]').forEach((btn) => {
         const input = document.getElementById(btn.getAttribute('data-password-toggle'));
         if (!input) return;
@@ -113,15 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (iconHide) iconHide.hidden = !reveal;
         });
     });
-});
 
-// Popup tamu di detail produk (UI polish Tahap 2). Tombol dengan
-// [data-guest-popup-open="<id popup>"] membuka popup; [data-guest-popup-close]
-// (tombol ×, backdrop) dan Esc menutupnya. Fokus pindah ke panel saat dibuka,
-// kembali ke tombol pemicu saat ditutup, dan Tab dijebak di dalam panel.
-// Tanpa JS, popup tetap tersembunyi (atribut hidden) dan tombol tidak
-// melakukan apa-apa; POST /keranjang/tambah tetap dikunci auth di server.
-document.addEventListener('DOMContentLoaded', () => {
+    // Dialog ajakan masuk untuk pengunjung di halaman produk
     document.querySelectorAll('[data-guest-popup-open]').forEach((opener) => {
         const popup = document.getElementById(opener.getAttribute('data-guest-popup-open'));
         if (!popup) return;
@@ -162,8 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         popup.querySelectorAll('[data-guest-popup-close]').forEach((el) => el.addEventListener('click', close));
     });
 
-    // Stepper jumlah: tombol ± hanya muncul bila JS aktif; input angka tetap
-    // sumber nilai yang dikirim, dibatasi min/max milik input itu sendiri.
+    // Stepper kuantitas keranjang & detail produk
     document.querySelectorAll('[data-stepper]').forEach((box) => {
         const input = box.querySelector('input[type="number"]');
         const minus = box.querySelector('[data-stepper-minus]');
@@ -180,94 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
         minus.addEventListener('click', () => step(-1));
         plus.addEventListener('click', () => step(1));
     });
-});
 
-// Panel teknis pembayaran tersembunyi (detail pembayaran admin di Tahap 4b/5
-// + detail pembayaran pembeli & halaman simulator di Tahap 7):
-// ketuk/klik 5 kali dalam 3 detik pada elemen [data-trace-trigger="<id popup>"]
-// membuka popup kecil berisi tombol "Lihat detail teknis" + tombol tutup (×).
-// Menekan "Lihat detail teknis" mengganti isi popup menjadi panel teknis lengkap.
-// Tanpa tombol permanen dan tanpa sessionStorage: setiap kali ingin membuka
-// kembali setelah ditutup, ketuk 5× lagi.
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-trace-trigger]').forEach((trigger) => {
-        const popupId = trigger.getAttribute('data-trace-trigger');
-        const popup = document.getElementById(popupId);
-        if (!popup) return;
-
-        const dialog = popup.querySelector('[role="dialog"]');
-        const gateStage = popup.querySelector('[data-trace-stage="gate"]');
-        const panelStage = popup.querySelector('[data-trace-stage="panel"]');
-        const expandBtn = popup.querySelector('[data-trace-expand]');
-        if (!dialog || !gateStage || !panelStage || !expandBtn) return;
-
-        let taps = [];
-
-        const visibleFocusables = () => Array.from(
-            dialog.querySelectorAll('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')
-        ).filter((el) => !el.hidden && el.offsetParent !== null);
-
-        const setStage = (mode) => {
-            const showPanel = mode === 'panel';
-            gateStage.hidden = showPanel;
-            panelStage.hidden = !showPanel;
-            dialog.classList.toggle('is-expanded', showPanel);
-        };
-
-        const closePopup = () => {
-            popup.hidden = true;
-            document.removeEventListener('keydown', onKey);
-        };
-
-        const onKey = (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                closePopup();
-                return;
-            }
-            if (e.key === 'Tab') {
-                const items = visibleFocusables();
-                if (items.length === 0) return;
-                const first = items[0];
-                const last = items[items.length - 1];
-                if (e.shiftKey && document.activeElement === first) {
-                    e.preventDefault();
-                    last.focus();
-                } else if (!e.shiftKey && document.activeElement === last) {
-                    e.preventDefault();
-                    first.focus();
-                }
-            }
-        };
-
-        const openPopup = () => {
-            setStage('gate');
-            popup.hidden = false;
-            document.addEventListener('keydown', onKey);
-            expandBtn.focus();
-        };
-
-        trigger.addEventListener('click', () => {
-            const now = Date.now();
-            taps = taps.filter((t) => now - t <= 3000);
-            taps.push(now);
-            if (taps.length >= 5) {
-                taps = [];
-                openPopup();
-            }
-        });
-
-        expandBtn.addEventListener('click', () => {
-            setStage('panel');
-            dialog.focus();
-        });
-
-        popup.querySelectorAll('[data-trace-close]').forEach((el) => {
-            el.addEventListener('click', closePopup);
-        });
-    });
-
-    // Drawer sidebar admin untuk tampilan mobile (<1024px, Tahap 5).
+    // Drawer sidebar admin (< 1024px)
     const sidebar = document.getElementById('admin-sidebar');
     const openBtn = document.querySelector('[data-admin-drawer-open]');
     const backdrop = document.querySelector('.admin-sidebar-backdrop');
@@ -305,8 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Menu hamburger top bar untuk tampilan mobile (<1024px). Pola yang sama
-    // dengan drawer admin: tombol membuka/menutup, backdrop dan Esc menutup.
+    // Menu navigasi storefront mobile (< 768px)
     const topbarNav = document.getElementById('topbar-nav');
     const topbarOpenBtn = document.querySelector('[data-topbar-menu-open]');
     const topbarBackdrop = document.querySelector('.topbar-backdrop');
@@ -342,201 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Drawer sidebar developer untuk tampilan mobile (<1024px, M4).
-    // Pola yang sama dengan drawer admin.
-    const devSidebar = document.getElementById('developer-sidebar');
-    const devOpenBtn = document.querySelector('[data-developer-drawer-open]');
-    const devBackdrop = document.querySelector('.developer-sidebar-backdrop');
-    if (devSidebar && devOpenBtn) {
-        const closeDevDrawer = () => {
-            devSidebar.classList.remove('is-open');
-            devOpenBtn.setAttribute('aria-expanded', 'false');
-            if (devBackdrop) devBackdrop.hidden = true;
-            document.removeEventListener('keydown', onDevDrawerKey);
-            devOpenBtn.focus();
-        };
-
-        const onDevDrawerKey = (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                closeDevDrawer();
-            }
-        };
-
-        devOpenBtn.addEventListener('click', () => {
-            const isOpen = devSidebar.classList.toggle('is-open');
-            devOpenBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-            if (devBackdrop) devBackdrop.hidden = !isOpen;
-            if (isOpen) {
-                document.addEventListener('keydown', onDevDrawerKey);
-                const closeBtn = devSidebar.querySelector('.developer-drawer-close');
-                if (closeBtn) closeBtn.focus();
-            } else {
-                document.removeEventListener('keydown', onDevDrawerKey);
-            }
-        });
-
-        document.querySelectorAll('[data-developer-drawer-close]').forEach((el) => {
-            el.addEventListener('click', closeDevDrawer);
-        });
-    }
-
-    // Pemilih akun simulasi (M4, D8): pencarian menyaring daftar di
-    // sisi klien, supaya centang tidak hilang saat berpindah halaman.
-    const accountFilter = document.querySelector('[data-sim-account-filter]');
-    if (accountFilter) {
-        const picker = accountFilter.closest('[data-sim-account-picker]');
-        const rows = picker ? Array.from(picker.querySelectorAll('[data-sim-account-row]')) : [];
-        const emptyNote = picker ? picker.querySelector('[data-sim-account-empty]') : null;
-        const countEl = picker ? picker.querySelector('[data-sim-account-count]') : null;
-        const total = rows.length;
-
-        accountFilter.addEventListener('input', () => {
-            const query = accountFilter.value.trim().toLowerCase();
-            let visible = 0;
-
-            rows.forEach((row) => {
-                const match = query === '' || (row.dataset.search || '').includes(query);
-                row.hidden = !match;
-                if (match) visible += 1;
-            });
-
-            if (emptyNote) emptyNote.hidden = visible !== 0;
-            if (countEl) countEl.textContent = query === '' ? String(total) : String(visible);
-        });
-
-        // Pilih acak (tombol bantuan): centang N akun acak dari baris
-        // yang sedang terlihat (mengikuti pencarian); centang lama
-        // diganti. N dijepit ke [1, jumlah terlihat] — batas server
-        // (maks 100 akun/request) tetap dijaga validator + pratinjau.
-        const randomCountInput = picker ? picker.querySelector('[data-sim-account-random-count]') : null;
-        const randomButton = picker ? picker.querySelector('[data-sim-account-random]') : null;
-        const clearButton = picker ? picker.querySelector('[data-sim-account-clear]') : null;
-
-        if (randomButton && randomCountInput) {
-            randomButton.addEventListener('click', () => {
-                const visible = rows.filter((row) => !row.hidden);
-                const wanted = Math.floor(Number(randomCountInput.value));
-
-                if (visible.length === 0 || !Number.isFinite(wanted) || wanted < 1) return;
-
-                const n = Math.min(wanted, visible.length);
-                randomCountInput.value = String(n);
-
-                const shuffled = visible.slice();
-                for (let i = shuffled.length - 1; i > 0; i -= 1) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                }
-
-                rows.forEach((row) => {
-                    const checkbox = row.querySelector('input[type="checkbox"]');
-                    if (checkbox) checkbox.checked = false;
-                });
-                shuffled.slice(0, n).forEach((row) => {
-                    const checkbox = row.querySelector('input[type="checkbox"]');
-                    if (checkbox) checkbox.checked = true;
-                });
-            });
-        }
-
-        if (clearButton) {
-            clearButton.addEventListener('click', () => {
-                rows.forEach((row) => {
-                    const checkbox = row.querySelector('input[type="checkbox"]');
-                    if (checkbox) checkbox.checked = false;
-                });
-            });
-        }
-    }
-
-    // Pilihan cepat periode (M4 SIM-16): tanggal dihitung server (WITA)
-    // dan disalin ke dua input tanggal dalam form yang sama.
-    document.querySelectorAll('[data-period-quick]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const scope = btn.closest('[data-period-scope]');
-            if (!scope) return;
-            const start = scope.querySelector('input[name="period_start"]');
-            const end = scope.querySelector('input[name="period_end"]');
-            if (start && btn.dataset.start) start.value = btn.dataset.start;
-            if (end && btn.dataset.end) end.value = btn.dataset.end;
-        });
-    });
-
-    // Distribusi 'satu titik': tampilkan input tanggal+jam hanya bila
-    // distribusi waktu = single.
-    document.querySelectorAll('[data-time-distribution]').forEach((radio) => {
-        radio.addEventListener('change', () => {
-            const field = document.querySelector('[data-single-point-field]');
-            if (!field) return;
-            const selected = document.querySelector('[data-time-distribution]:checked');
-            field.hidden = !selected || selected.value !== 'single';
-        });
-    });
-
-    // Preset jumlah funnel (M7 SIM-32/33): tombol hanya mengisi empat
-    // angka formulir Aksi 4 — tanpa perubahan planner/validator
-    // (blueprint §9.8). Tombol bertipe button, bukan submit.
-    document.querySelectorAll('[data-funnel-preset]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const set = (id, value) => {
-                const input = document.getElementById(id);
-                if (input) input.value = value;
-            };
-            set('view_count', button.dataset.view);
-            set('add_to_cart_count', button.dataset.cart);
-            set('booking_count', button.dataset.booking);
-            set('purchase_count', button.dataset.purchase);
-        });
-    });
-
-    // Cakupan user period-first (SIM-18): pemilih akun hanya untuk
-    // 'one'/'several', input k hanya untuk 'random'.
-    const scopeGroup = document.querySelector('[data-user-scope]');
-    if (scopeGroup) {
-        const syncScope = () => {
-            const selected = scopeGroup.querySelector('[data-user-scope-option]:checked');
-            const value = selected ? selected.value : 'all';
-            const picker = scopeGroup.querySelector('[data-user-scope-picker]');
-            const random = scopeGroup.querySelector('[data-user-scope-random]');
-            if (picker) picker.hidden = value !== 'one' && value !== 'several';
-            if (random) random.hidden = value !== 'random';
-        };
-        scopeGroup.querySelectorAll('[data-user-scope-option]').forEach((radio) => {
-            radio.addEventListener('change', syncScope);
-        });
-        syncScope();
-    }
-
-    // Reset (SIM-38/39): tombol aktif hanya bila frasa diketik persis.
-    // Validasi server tetap yang menentukan; ini hanya kenyamanan.
-    document.querySelectorAll('[data-reset-form]').forEach((form) => {
-        const input = form.querySelector('[data-reset-phrase]');
-        const submit = form.querySelector('[data-reset-submit]');
-        if (!input || !submit) return;
-
-        const syncPhrase = () => {
-            submit.disabled = input.value.trim() !== input.dataset.resetPhrase;
-        };
-        input.addEventListener('input', syncPhrase);
-        syncPhrase();
-    });
-
-    // Konfirmasi eksekusi (SIM-26): cegah klik ganda — kunci
-    // idempotensi di server tetap menjadi pengaman terakhir.
-    document.querySelectorAll('[data-confirm-once]').forEach((form) => {
-        form.addEventListener('submit', () => {
-            form.querySelectorAll('button[type="submit"]').forEach((btn) => {
-                btn.disabled = true;
-            });
-        });
-    });
-
-    // Grafik analitik (M5 FR-01/FR-03): canvas membawa [data-chart] dan
-    // konfigurasi JSON di [data-chart-config] (dibangun server-side,
-    // hanya data + opsi aman-JSON). Sumbu/tooltip Rp diaktifkan lewat
-    // [data-chart-rupiah] — callback tidak bisa lewat JSON, jadi
-    // ditambahkan di sini.
+    // Grafik analitik admin (tema Minimalist Monochrome Slate)
     const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     document.querySelectorAll('[data-chart]').forEach((canvas) => {
         let config;
@@ -556,43 +234,39 @@ document.addEventListener('DOMContentLoaded', () => {
             config.options.animation = false;
         }
 
-        // Interaksi hover lebih mudah dibaca pada grafik garis harian
         if (config.type === 'line') {
             config.options.interaction = {
                 mode: 'index',
                 intersect: false,
                 ...(config.options.interaction || {}),
             };
-            const ctx2d = typeof canvas.getContext === 'function' ? canvas.getContext('2d') : null;
             if (Array.isArray(config.data.datasets)) {
                 const hasAnyFilled = config.data.datasets.some((d) => d.fill !== false);
                 config.data.datasets = config.data.datasets.map((ds, idx) => {
                     const isFilled = ds.fill !== false;
-                    let bg = ds.backgroundColor || (isFilled ? 'rgba(102, 85, 245, 0.16)' : 'transparent');
-                    if (ctx2d && isFilled) {
-                        const grad = ctx2d.createLinearGradient(0, 0, 0, 280);
-                        grad.addColorStop(0, 'rgba(102, 85, 245, 0.28)');
-                        grad.addColorStop(1, 'rgba(102, 85, 245, 0.01)');
-                        bg = grad;
-                    }
+                    const stroke = idx === 0 ? '#111827' : (ds.borderColor || '#6B7280');
                     return {
-                        borderWidth: idx === 0 ? 2.75 : 2.35,
-                        borderDash: hasAnyFilled && !isFilled && idx > 0 ? [6, 4] : undefined,
-                        pointRadius: 3.5,
-                        pointHoverRadius: 6,
+                        borderWidth: idx === 0 ? 2 : 1.75,
+                        borderDash: hasAnyFilled && !isFilled && idx > 0 ? [5, 4] : undefined,
+                        pointRadius: 2.5,
+                        pointHoverRadius: 5,
                         pointBackgroundColor: '#FFFFFF',
-                        pointBorderColor: ds.borderColor || '#6655F5',
-                        pointBorderWidth: 2,
+                        pointBorderColor: stroke,
+                        pointBorderWidth: 1.75,
                         ...ds,
-                        backgroundColor: bg,
+                        borderColor: ds.borderColor && !ds.borderColor.includes('6655F5') ? ds.borderColor : stroke,
+                        backgroundColor: isFilled ? 'rgba(17, 24, 39, 0.08)' : 'transparent',
                     };
                 });
             }
         } else if (config.type === 'bar' && Array.isArray(config.data.datasets)) {
             config.data.datasets = config.data.datasets.map((ds) => ({
-                maxBarThickness: 36,
+                maxBarThickness: 32,
                 borderSkipped: false,
                 ...ds,
+                backgroundColor: Array.isArray(ds.backgroundColor)
+                    ? ds.backgroundColor.map((c) => (typeof c === 'string' && c.includes('102, 85, 245') ? '#6B7280' : c))
+                    : (ds.backgroundColor && String(ds.backgroundColor).includes('102, 85, 245') ? '#111827' : ds.backgroundColor),
             }));
         }
 
@@ -604,22 +278,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     usePointStyle: true,
                     boxWidth: 8,
                     padding: 16,
-                    color: '#171A36',
-                    font: { family: "'Manrope', sans-serif", size: 12, weight: '700' },
+                    color: '#111827',
+                    font: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '600' },
                     ...(config.options.plugins.legend.labels || {}),
                 },
             };
         }
+
         config.options.plugins.tooltip = {
-            backgroundColor: '#171A36',
+            backgroundColor: '#111827',
             titleColor: '#FFFFFF',
-            bodyColor: '#EAECF8',
-            titleFont: { family: "'Manrope', sans-serif", size: 13, weight: '700' },
-            bodyFont: { family: "'Inter', sans-serif", size: 13 },
-            padding: 12,
-            cornerRadius: 12,
+            bodyColor: '#F3F4F6',
+            titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '700' },
+            bodyFont: { family: "'Inter', sans-serif", size: 12 },
+            padding: 10,
+            cornerRadius: 8,
             displayColors: true,
-            boxPadding: 5,
+            boxPadding: 4,
             ...(config.options.plugins.tooltip || {}),
             callbacks: {
                 ...((config.options.plugins.tooltip && config.options.plugins.tooltip.callbacks) || {}),
@@ -635,11 +310,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const axisTickStyle = {
-            color: '#515A8C',
-            font: { family: "'Inter', sans-serif", size: 12 },
+            color: '#6B7280',
+            font: { family: "'Inter', sans-serif", size: 11 },
         };
         const axisGridStyle = {
-            color: 'rgba(209, 213, 231, 0.55)',
+            color: '#E5E7EB',
             drawTicks: false,
         };
 

@@ -43,7 +43,7 @@ Periode <8 minggu penuh → "Data belum cukup" (K13). --}}
                                 return match ($p['label_code'] ?? '') {
                                     'naik' => 'rgba(14, 159, 110, 0.85)',
                                     'turun' => 'rgba(214, 59, 90, 0.85)',
-                                    default => 'rgba(102, 85, 245, 0.45)',
+                                    default => 'rgba(107, 114, 128, 0.45)',
                                 };
                             }, $chartProducts),
                             'borderRadius' => 8,
@@ -65,7 +65,7 @@ Periode <8 minggu penuh → "Data belum cukup" (K13). --}}
             // disejajarkan pada gabungan minggu penuh; minggu sebelum
             // produk mulai (trimmed) bernilai null supaya garisnya
             // berhenti, bukan nol yang menyesatkan.
-            $linePalette = ['#6655F5', '#8B7CF6', '#5B8DEF', '#7A9CC6', '#9B8AFB'];
+            $linePalette = ['#111827', '#4B5563', '#2563EB', '#6B7280', '#9CA3AF'];
             $rankedIds = array_merge(
                 array_column($trend['rankings']['naik'] ?? [], 'product_id'),
                 array_column($trend['rankings']['turun'] ?? [], 'product_id'),
