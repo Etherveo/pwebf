@@ -68,7 +68,7 @@
                                     <a class="admin-cell-link" href="{{ route('pesanan.show', $order) }}">{{ $order->order_number }}</a>
                                 </td>
                                 <td data-label="Tanggal (WITA)" class="admin-cell-nowrap">
-                                    {{ $order->created_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA
+                                    {{ $order->created_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA
                                 </td>
                                 <td data-label="Total" class="admin-cell-price">{{ $order->formattedTotal() }}</td>
                                 <td data-label="Status">

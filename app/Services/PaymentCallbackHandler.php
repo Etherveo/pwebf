@@ -39,10 +39,10 @@ class PaymentCallbackHandler
         }
 
         match ($status) {
-            'paid' => $this->payments->markPaid($payment, 'callback_simulasi', $requestId),
+            'paid' => $this->payments->markPaid($payment, 'callback_gateway', $requestId),
             // PAY-30: failed changes only the payment; the order stays
-            // menunggu_pembayaran and the stock stays reserved (U-12).
-            'failed' => $this->payments->markFailed($payment, 'callback_simulasi', $requestId),
+            // menunggu_pembayaran and the stock stays reserved.
+            'failed' => $this->payments->markFailed($payment, 'callback_gateway', $requestId),
             'expired' => $this->payments->markExpired($payment, 'job_kedaluwarsa', $requestId),
             default => throw new \InvalidArgumentException('Status callback tidak dikenal: '.$status),
         };

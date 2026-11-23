@@ -54,16 +54,16 @@
                         </div>
                         <div class="admin-kv-row">
                             <dt class="admin-kv-row-label">Dibuat</dt>
-                            <dd class="admin-kv-row-val">{{ $order->created_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
+                            <dd class="admin-kv-row-val">{{ $order->created_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
                         </div>
                         <div class="admin-kv-row">
                             <dt class="admin-kv-row-label">Batas waktu bayar</dt>
-                            <dd class="admin-kv-row-val">{{ $order->payment_deadline_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
+                            <dd class="admin-kv-row-val">{{ $order->payment_deadline_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
                         </div>
                         @if ($order->paid_at)
                             <div class="admin-kv-row">
                                 <dt class="admin-kv-row-label">Dibayar</dt>
-                                <dd class="admin-kv-row-val">{{ $order->paid_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
+                                <dd class="admin-kv-row-val">{{ $order->paid_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
                             </div>
                         @endif
                     </dl>
@@ -130,7 +130,7 @@
                                         </div>
                                         <div>
                                             <dt>Kedaluwarsa</dt>
-                                            <dd>{{ $payment->expires_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
+                                            <dd>{{ $payment->expires_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
                                         </div>
                                     </dl>
                                     <p class="buyer-payment-foot">
@@ -190,7 +190,7 @@
                     @foreach ($order->histories->sortByDesc('occurred_at') as $history)
                         <li>
                             <strong>{{ $history->from_status ?? '—' }} → {{ $history->to_status }}</strong>
-                            ({{ $history->trigger }}) — {{ $history->occurred_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA
+                            ({{ $history->trigger }}) — {{ $history->occurred_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA
                             @if ($history->reason)
                                 — alasan: {{ $history->reason }}
                             @endif

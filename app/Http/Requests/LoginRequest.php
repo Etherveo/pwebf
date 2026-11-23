@@ -4,12 +4,9 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-// Keputusan 2026-11-05: login disatukan — one form, one POST, with an
-// aktor switch (pembeli | admin_toko | developer). Guard/role checks live
-// in the controller, not here, so a wrong-actor attempt always ends with
-// the same generic message as a wrong password.
-// Role/guard checks live in the controllers, not here, so a wrong-role
-// attempt always ends with the same generic message as a wrong password.
+// Unified login form with two actors: pembeli | admin_toko.
+// Role checks stay in the controller so a wrong-actor attempt always returns
+// the same generic credential error as a wrong password.
 class LoginRequest extends FormRequest
 {
     public function authorize(): bool
@@ -27,7 +24,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'aktor' => ['required', 'string', 'in:pembeli,admin_toko,developer'],
+            'aktor' => ['required', 'string', 'in:pembeli,admin_toko'],
             'email' => ['required', 'string', 'email', 'max:190'],
             'password' => ['required', 'string'],
         ];

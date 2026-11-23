@@ -2,17 +2,13 @@
 
 namespace App\Payments;
 
-// M3b PAY-25, blueprint §8.6. The dummy HMAC signature for simulator
-// webhooks: `sim-hmac-sha256=<hex>` over the RAW request body, keyed
-// by SIMULATOR_WEBHOOK_SECRET from the environment. Compared in
-// constant time. An empty secret never verifies (fail closed): if the
-// secret is not configured, every callback is rejected with 401.
-// The secret itself is never logged, displayed, or stored anywhere.
+// Verifikasi HMAC SHA-256 webhook gateway (`hmac-sha256=<hex>`) atas raw request body.
+// Secret kosong selalu gagal (fail closed).
 class SignatureVerifier
 {
-    public const HEADER = 'X-Simulator-Signature';
+    public const HEADER = 'X-Webhook-Signature';
 
-    public const PREFIX = 'sim-hmac-sha256=';
+    public const PREFIX = 'hmac-sha256=';
 
     public static function sign(string $rawBody, string $secret): string
     {

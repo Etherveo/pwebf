@@ -56,6 +56,6 @@ class CheckoutController extends Controller
         );
 
         return redirect()->route('pesanan.bayar', $order)
-            ->with('status', 'Pesanan '.$order->order_number.' dibuat. Batas waktu bayar: '.$order->payment_deadline_at->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i').' WITA.');
+            ->with('status', 'Pesanan '.$order->order_number.' dibuat. Batas waktu bayar: '.$order->payment_deadline_at->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i').' WITA.');
     }
 }

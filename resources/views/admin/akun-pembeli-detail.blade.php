@@ -52,7 +52,7 @@
                 @if ($account->deactivated_at)
                     <div class="admin-kv-item">
                         <span class="admin-kv-label">Dinonaktifkan pada (WITA)</span>
-                        <span class="admin-kv-value">{{ $account->deactivated_at->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }}</span>
+                        <span class="admin-kv-value">{{ $account->deactivated_at->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }}</span>
                     </div>
                 @endif
             </div>

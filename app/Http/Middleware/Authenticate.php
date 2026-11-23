@@ -16,10 +16,6 @@ class Authenticate extends BaseAuthenticate
             return null;
         }
 
-        if ($request->is('developer/*') || $request->is('developer')) {
-            return route('masuk', ['aktor' => 'developer']);
-        }
-
         if ($request->is('admin/*') || $request->is('admin')) {
             return route('masuk', ['aktor' => 'admin_toko']);
         }

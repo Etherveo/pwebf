@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 // ACC-01: name 2-100, email valid/max 190/unique case-insensitive,
-// password >= 8 + confirmation, reserved simulation domain rejected.
+// password >= 8 + confirmation.
 class RegisterBuyerRequest extends FormRequest
 {
     public function authorize(): bool
@@ -31,16 +31,5 @@ class RegisterBuyerRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:190', Rule::unique('users', 'email')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
-    }
-
-    public function withValidator($validator): void
-    {
-        $validator->after(function ($validator) {
-            $email = (string) $this->input('email', '');
-            $domain = mb_strtolower(substr(strrchr($email, '@') ?: '', 1));
-            if ($domain !== '' && $domain === mb_strtolower((string) config('ira.sim_account_email_domain'))) {
-                $validator->errors()->add('email', 'Domain email ini dicadangkan untuk akun simulasi.');
-            }
-        });
     }
 }

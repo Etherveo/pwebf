@@ -40,7 +40,7 @@
                     </div>
                     <div class="admin-kv-row">
                         <dt class="admin-kv-row-label">Dibayar</dt>
-                        <dd class="admin-kv-row-val">{{ $payment->paid_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
+                        <dd class="admin-kv-row-val">{{ $payment->paid_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
                     </div>
                     <div class="admin-kv-row">
                         <dt class="admin-kv-row-label">Status pembayaran</dt>

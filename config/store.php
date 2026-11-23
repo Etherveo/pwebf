@@ -13,6 +13,11 @@ return [
     // Lokasi toko opsional; kosongkan untuk tidak menampilkan nama kota di UI.
     'location' => env('STORE_LOCATION', ''),
 
+    // Awalan nomor pesanan (contoh: JBR-261124-ABC123) dan zona waktu pelaporan WITA.
+    'order_prefix' => env('STORE_ORDER_PREFIX', 'JBR'),
+    'reporting_timezone' => env('REPORTING_TIMEZONE', 'Asia/Makassar'),
+    'payment_expiry_minutes' => (int) env('PAYMENT_EXPIRY_MINUTES', 30),
+
     // Label zona waktu pelaporan/tampilan.
     'timezone_label' => env('STORE_TIMEZONE_LABEL', 'WITA'),
 

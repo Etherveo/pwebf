@@ -97,16 +97,16 @@
                     <dl class="admin-kv-list">
                         <div class="admin-kv-row">
                             <dt class="admin-kv-row-label">Dibuat</dt>
-                            <dd class="admin-kv-row-val">{{ $payment->created_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
+                            <dd class="admin-kv-row-val">{{ $payment->created_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
                         </div>
                         <div class="admin-kv-row">
                             <dt class="admin-kv-row-label">Kedaluwarsa</dt>
-                            <dd class="admin-kv-row-val">{{ $payment->expires_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
+                            <dd class="admin-kv-row-val">{{ $payment->expires_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
                         </div>
                         @if ($payment->paid_at)
                             <div class="admin-kv-row">
                                 <dt class="admin-kv-row-label">Dibayar</dt>
-                                <dd class="admin-kv-row-val">{{ $payment->paid_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
+                                <dd class="admin-kv-row-val">{{ $payment->paid_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
                             </div>
                         @endif
                     </dl>
@@ -129,13 +129,13 @@
 
         <section class="card admin-panel" aria-labelledby="buyer-payment-timeline">
             <h2 class="admin-section-title" id="buyer-payment-timeline">Timeline Transisi Status</h2>
-            @if ($panel['transitions']->isEmpty())
+            @if ($transitions->isEmpty())
                 <p class="admin-hint">Belum ada transisi status tercatat.</p>
             @else
                 <ul class="admin-timeline">
-                    @foreach ($panel['transitions'] as $transition)
+                    @foreach ($transitions as $transition)
                         <li>
-                            {{ $transition->occurred_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} {{ config('store.timezone_label') }} —
+                            {{ $transition->occurred_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} {{ config('store.timezone_label') }} —
                             {{ $transition->from_status ? (\App\Models\Payment::STATUS_LABELS[$transition->from_status] ?? $transition->from_status) : '—' }} →
                             <strong>{{ \App\Models\Payment::STATUS_LABELS[$transition->to_status] ?? $transition->to_status }}</strong>
                         </li>

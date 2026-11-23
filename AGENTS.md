@@ -238,20 +238,20 @@ The final report states the outcome, the affected files, the verification perfor
 
 ---
 
-## C. Keputusan & Arah Proyek Baru (Transformasi dari Baseline `iraweb`)
+## C. Keputusan & Arah Proyek Baru (Transformasi E-Commerce `Jubarol`)
 
-> **Status fase saat ini:** Repo masih berada pada **baseline source code `Etherveo/iraweb`** yang belum diubah. Seluruh rencana perubahan arsitektur, UI, database, dan payment gateway baru dicatat di dokumentasi terlebih dahulu sebelum mengubah kode sumber apa pun.
+> **Status fase saat ini:** Transformasi UI Minimalist Slate, rebrand terpusat `"Jubarol"` (`config/store.php`), penghapusan role `developer`, subsistem simulasi & servis Python, kontrak `PaymentAdapter` netral (`manual`), dan skema migrasi greenfield SQLite portabel telah selesai diterapkan pada codebase aktif.
 
-Keputusan yang mengikat arah transformasi:
+Keputusan yang mengikat arah pengembangan lanjut:
 
-- **Tahap saat ini: Dokumentasi & Analisis saja (kecuali diinstruksikan eksplisit untuk mulai coding).** Jangan mengubah source code aplikasi (`app/`, `config/`, `database/`, `resources/`, `routes/`, `python/`, `tests/`) sebelum pemilik proyek memberi lampu hijau masuk ke fase implementasi.
-- **UI: Pergantian total ke Minimalist.** Meninggalkan *Light Neumorphism + Motion* (`docs/UI.md`) menuju desain datar minimalis berbatas tipis dengan kontras tinggi. Rujukan target: `docs/ui-minimalist-spec.md`.
-- **Rebranding dari "Ira".** Nama toko baru sedang didiskusikan. Jangan menaruh nama merek baru secara hardcoded di kode/tampilan; gunakan konfigurasi terpusat dan placeholder `[Nama Toko TBD]` di dokumentasi sampai nama final ditetapkan.
-- **Penghapusan role `developer` dan seluruh subsistem simulasi.** Tidak ada lagi guard `developer`, tabel `developers`, panel `/developer/*`, mesin simulasi `app/Simulation/*`, skrip biodata `python/biodata/*`, maupun halaman/rute simulator pembayaran (`/pay/sim/*`, `SimulatorPaymentAdapter`, `InternalDispatcher`).
-- **Scope e-commerce lebih ringkas + Payment Gateway riil.** Aplikasi hanya melayani **2 aktor** (`pembeli` dan `admin_toko` di guard `web`). Pembayaran diintegrasikan ke payment gateway riil di balik interface `App\Payments\PaymentAdapter` dan endpoint `POST /api/v1/webhooks/payments/{provider}`.
-- **Database benar-benar baru.** Jangan mewarisi atau memigrasi data/file database lama dari `iraweb`. Proyek baru menggunakan database dan skema migrasi bersih dari nol tanpa tabel/kolom simulasi (`docs/database-baru.md`).
-- **Zona waktu & lokal:** Antarmuka berbahasa Indonesia, mata uang Rupiah (`Rp 1.250.000`), zona waktu penyimpanan UTC dan pelaporan WITA (`Asia/Makassar`), kecuali diubah oleh keputusan pemilik proyek.
-- **Tes:** Pest (`pestphp/pest ^5.3`).
+- **UI: Minimalist Slate.** Desain datar berbatas tipis (`resources/css/tokens.css`, `resources/css/app.css`) merujuk `docs/ui-minimalist-spec.md`.
+- **Rebranding terpusat (`DEC-01`).** Seluruh nama merek, inisial, awalan nomor pesanan (`store.order_prefix`), zona waktu pelaporan WITA (`Asia/Makassar`), dan masa berlaku pembayaran dikelola lewat `config/store.php` / `.env` (sementara memakai nama `"Jubarol"`).
+- **Dua aktor tanpa simulasi & tanpa Python.** Aplikasi hanya melayani **2 aktor** (`pembeli` dan `admin_toko` di guard `web`). Seluruh guard `developer`, mesin simulasi `app/Simulation/`, servis `python/`, serta rute simulator pembayaran telah dihapus. Dashboard admin memakai ringkasan penjualan SQL ringan langsung (`Admin\DashboardController`).
+- **Arsitektur Payment Gateway siap integrasi (`DEC-04`).** Checkout & pesanan bergantung mutlak pada interface `App\Payments\PaymentAdapter` (`ManualPaymentAdapter` sebagai implementasi netral sementara) dan endpoint `POST /api/v1/webhooks/payments/{provider}` bertanda tangan HMAC. Integrasi gateway riil (Midtrans / Xendit / Tripay / Duitku) ditambahkan kelak sebagai adapter baru di `ProviderRegistry`.
+- **Database greenfield bersih (`DEC-05`).** Seluruh skema menggunakan migrasi Laravel `Schema::create(...)` portabel pada `database/database.sqlite` tanpa tabel/kolom simulasi atau developer.
+- **Pemenuhan pesanan (`DEC-03` — ditunda).** Model ambil di toko (`pickup_at`, `picked_up_at`, label `"Siap Diambil"`) tetap dipertahankan sampai keputusan pengiriman alamat dibahas lebih lanjut.
+- **Zona waktu, mata uang & lokal:** Antarmuka berbahasa Indonesia, mata uang Rupiah (`Rp 1.250.000`), penyimpanan UTC dan pelaporan WITA (`Asia/Makassar`).
+- **Perintah CLI toko & Tes:** `php artisan store:check-config`, `php artisan store:expire-overdue-orders`, `php artisan store:provision-account`, serta suite tes Pest (`pestphp/pest ^5.3`).
 
 ### Indeks Dokumen di `docs/`
 

@@ -31,8 +31,6 @@ class OrderController extends Controller
             ->with('user')
             ->when(in_array($request->input('status'), Order::STATUSES, true),
                 fn ($q) => $q->where('status', $request->input('status')))
-            ->when(in_array($request->input('asal'), ['normal', 'developer_simulation'], true),
-                fn ($q) => $q->where('origin', $request->input('asal')))
             ->when($this->isDate($request->input('dari')),
                 fn ($q) => $q->whereDate('created_at', '>=', $request->input('dari')))
             ->when($this->isDate($request->input('sampai')),

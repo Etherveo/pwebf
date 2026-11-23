@@ -19,8 +19,7 @@ class PaymentStatusTransition extends Model
 
     protected $fillable = [
         'payment_id', 'from_status', 'to_status', 'trigger',
-        'request_id', 'occurred_at', 'origin', 'simulation_run_id',
-        'created_at',
+        'request_id', 'occurred_at', 'created_at',
     ];
 
     protected function casts(): array

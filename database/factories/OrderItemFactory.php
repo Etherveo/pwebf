@@ -24,8 +24,6 @@ class OrderItemFactory extends Factory
             'unit_price_idr' => $price,
             'quantity' => $quantity,
             'subtotal_idr' => $price * $quantity,
-            'origin' => 'normal',
-            'simulation_run_id' => null,
         ];
     }
 }

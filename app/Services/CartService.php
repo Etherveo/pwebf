@@ -15,8 +15,6 @@ use Illuminate\Validation\ValidationException;
 // only ever touched through its owner's cart.
 class CartService
 {
-    public function __construct(private readonly ActivityRecorder $events) {}
-
     public function cartFor(User $user): Cart
     {
         return Cart::query()->firstOrCreate(['user_id' => $user->id]);
@@ -87,9 +85,6 @@ class CartService
                     'quantity' => $quantity,
                 ]);
             }
-
-            // EVT-03: only on a successful add.
-            $this->events->recordAddToCart($user, $product);
 
             return $item;
         });

@@ -37,7 +37,7 @@ class Payment extends Model
         'order_id', 'user_id', 'provider', 'provider_payment_id',
         'payment_method', 'amount_idr', 'currency', 'status',
         'reference_code', 'payment_token', 'qr_url', 'expires_at',
-        'paid_at', 'is_simulated', 'origin', 'simulation_run_id',
+        'paid_at',
     ];
 
     protected function casts(): array
@@ -46,7 +46,6 @@ class Payment extends Model
             'amount_idr' => 'integer',
             'expires_at' => 'datetime',
             'paid_at' => 'datetime',
-            'is_simulated' => 'boolean',
         ];
     }
 

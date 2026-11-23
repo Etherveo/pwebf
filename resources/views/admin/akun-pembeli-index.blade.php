@@ -1,8 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- UI polish Tahap 4b (UI.md §6.6, §9.4). Semua filter GET (cari,
-         status, asal), lencana SIMULASI, pagination, dan teks asersi tetap sama. --}}
     <div class="admin-page">
         <header class="admin-head">
             <div>
@@ -72,7 +70,7 @@
                                     @endif
                                 </td>
                                 <td data-label="Tanggal daftar (WITA)">
-                                    <span class="admin-cell-nowrap">{{ $account->created_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }}</span>
+                                    <span class="admin-cell-nowrap">{{ $account->created_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }}</span>
                                 </td>
                                 <td data-label="Aksi">
                                     <a class="admin-action-link" href="{{ route('admin.akun-pembeli.show', $account) }}">Detail</a>

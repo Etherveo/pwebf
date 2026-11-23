@@ -2,28 +2,17 @@
 
 use App\Models\Order;
 use App\Models\Payment;
-use App\Models\PaymentHttpTrace;
 use App\Models\PaymentStatusTransition;
 use App\Models\Product;
 use App\Models\User;
 use App\Payments\SignatureVerifier;
-use App\Services\PaymentTracePanel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-
-// M3c PAY-37..54. HTTP panel (read-only, from stored traces),
-// timeline, copy JSON/cURL, result pages, receipt, buyer history +
-// detail, admin list + detail, PAY-53 (no payment mutation routes),
-// PAY-54 (SIMULASI label on every payment view). No Python, no
-// Figma images, no external HTTP: every provider event goes through
-// the app's own webhook endpoint via InternalDispatcher.
-//
-// The webhook secret for tests is set via config()->set here, never
-// in phpunit.xml or .env. app.url is pinned so the panel/cURL URLs
-// do not depend on the developer's local .env.
+use Illuminate\Testing\TestResponse;
 
 beforeEach(function () {
+    config()->set('payment.driver', 'manual');
     config()->set('payment.webhook_secret', 'test-secret');
     config()->set('app.url', 'http://localhost:8000');
 });
@@ -46,8 +35,6 @@ function m3cProduct(array $attributes = []): Product
     ));
 }
 
-// Pickup schedule (keputusan Ren 2026-11-09): checkout wajib membawa
-// jadwal — besok pukul 10:00 WITA, selalu valid.
 function m3cPickup(): array
 {
     return [
@@ -56,9 +43,6 @@ function m3cPickup(): array
     ];
 }
 
-// Build a cart through the real HTTP routes, then check out. Returns
-// the created order (fresh). The checkout POST redirects to the
-// payment instruction page (M3b).
 function m3cCheckout($t, User $buyer, array $lines, string $method = 'qris', ?string $key = null): Order
 {
     $t->actingAs($buyer, 'web');
@@ -79,59 +63,37 @@ function m3cCheckout($t, User $buyer, array $lines, string $method = 'qris', ?st
     return Order::where('user_id', $buyer->id)->latest('id')->first();
 }
 
+function m3cWebhook($t, Payment $payment, string $status): TestResponse
+{
+    $payload = [
+        'payment_id' => $payment->id,
+        'order_id' => $payment->order->order_number,
+        'status' => $status,
+        'reference' => $payment->reference_code,
+    ];
+    if ($status === 'paid') {
+        $payload['paid_at'] = now()->toIso8601String();
+    }
+
+    $body = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+    return $t->call('POST', '/api/v1/webhooks/payments/manual', [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_ACCEPT' => 'application/json',
+        'HTTP_X_WEBHOOK_SIGNATURE' => SignatureVerifier::sign($body, 'test-secret'),
+    ], $body);
+}
+
 function m3cPaidOrder($t, User $buyer): Order
 {
     $order = m3cCheckout($t, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
     $payment = $order->payments()->first();
-    $t->post('/pay/sim/'.$payment->payment_token.'/bayar')->assertOk();
+    m3cWebhook($t, $payment, 'paid')->assertOk();
 
     return $order->fresh();
 }
 
-// ---- Panel: PAY-37/38/39 ----
-
-test('PAY-37 trace panel data records create_payment while buyer payment UI omits simulator trace', function () {
-    $buyer = m3cBuyer();
-    $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
-    $payment = $order->payments()->first();
-
-    $panel = app(PaymentTracePanel::class)->forPayment($payment->fresh(['transitions']));
-    expect($panel['create'])->not->toBeNull();
-    expect($panel['create']->path)->toBe('/api/v1/simulator/payments');
-    expect($panel['create']->response_status)->toBe(201);
-    expect($panel['create']->request_body_json)->toHaveKeys(['order_id', 'amount', 'currency', 'payment_method', 'callback_url', 'return_url']);
-    expect($panel['create']->response_body_json)->toHaveKeys(['payment_token', 'qr_url', 'expires_at']);
-
-    $this->actingAs($buyer, 'web');
-    $this->get('/pembayaran/'.$payment->id)->assertOk()
-        ->assertSee($order->order_number)
-        ->assertSee($payment->reference_code)
-        ->assertSee('Timeline Transisi Status')
-        ->assertDontSee('Simulated HTTP Request')
-        ->assertDontSee('SIMULASI');
-});
-
-test('PAY-38 trace panel records callback while buyer payment UI displays updated status cleanly', function () {
-    $buyer = m3cBuyer();
-    $order = m3cPaidOrder($this, $buyer);
-    $payment = $order->payments()->first();
-
-    $panel = app(PaymentTracePanel::class)->forPayment($payment->fresh(['transitions']));
-    expect($panel['callbacks'])->not->toBeEmpty();
-    $callback = $panel['callbacks']->first();
-    expect($callback->path)->toBe('/api/v1/webhooks/payments/simulator');
-    expect($callback->request_headers_json)->toHaveKey('x-simulator-signature');
-    expect($callback->response_status)->toBe(200);
-    expect($callback->request_body_json)->toHaveKey('paid_at');
-    expect(PaymentTracePanel::orderStatusAfter($callback))->toBe('dibayar');
-
-    $this->actingAs($buyer, 'web');
-    $this->get('/pembayaran/'.$payment->id)->assertOk()
-        ->assertSee('Terbayar')
-        ->assertSee('Dibayar')
-        ->assertDontSee('Simulated HTTP Request')
-        ->assertDontSee('SIMULASI');
-});
+// ---- Timeline & Clean Payment Detail ----
 
 test('PAY-39 timeline shows transitions chronologically in UI and records trigger + request id', function () {
     $buyer = m3cBuyer();
@@ -142,92 +104,29 @@ test('PAY-39 timeline shows transitions chronologically in UI and records trigge
         ->where('payment_id', $payment->id)->where('to_status', 'paid')->first();
     expect($paidTransition)->not->toBeNull();
     expect($paidTransition->request_id)->not->toBeNull();
-    expect($paidTransition->trigger)->toBe('callback_simulasi');
+    expect($paidTransition->trigger)->toBe('callback_gateway');
 
     $this->actingAs($buyer, 'web');
     $this->get('/pembayaran/'.$payment->id)->assertOk()
         ->assertSee('Timeline Transisi Status')
         ->assertSee('Menunggu Pembayaran')
         ->assertSee('Terbayar')
-        ->assertSee('WITA');
+        ->assertSee('WITA')
+        ->assertDontSee('Simulated HTTP Request')
+        ->assertDontSee('SIMULASI')
+        ->assertDontSee('test-secret');
 });
 
-// ---- Panel: PAY-40/41/42/43/44 ----
-
-test('PAY-40 buyer payment UI hides raw HTTP JSON and cURL copy controls', function () {
-    $buyer = m3cBuyer();
-    $order = m3cPaidOrder($this, $buyer);
-    $payment = $order->payments()->first();
-    $create = PaymentHttpTrace::query()->where('payment_id', $payment->id)->where('kind', 'create_payment')->first();
-    $callback = PaymentHttpTrace::query()->where('payment_id', $payment->id)->where('kind', 'callback')->first();
-    expect($create)->not->toBeNull();
-    expect($callback)->not->toBeNull();
-
-    $this->actingAs($buyer, 'web');
-    $this->get('/pembayaran/'.$payment->id)->assertOk()
-        ->assertDontSee('data-copy-target="trace-', false)
-        ->assertDontSee('Salin JSON request')
-        ->assertDontSee('Salin JSON response')
-        ->assertDontSee('Salin cURL');
-});
-
-test('PAY-41 cURL callback builder produces valid HMAC while UI hides raw cURL trace', function () {
-    $buyer = m3cBuyer();
-    $order = m3cPaidOrder($this, $buyer);
-    $payment = $order->payments()->first();
-
-    $trace = PaymentHttpTrace::query()->where('payment_id', $payment->id)->where('kind', 'callback')->first();
-    expect($trace)->not->toBeNull();
-
-    $curl = (new PaymentTracePanel)->curlForCallback($trace);
-    expect($curl)->toContain("curl -X POST 'http://localhost:8000/api/v1/webhooks/payments/simulator'");
-    expect($curl)->toContain("-H 'Content-Type: application/json'");
-    expect($curl)->toContain("-H 'X-Simulator-Signature: sim-hmac-sha256=");
-    expect($curl)->not->toContain('test-secret');
-
-    // The signature must verify against EXACTLY the body in the command.
-    preg_match("/-d '(\\{.*\\})'/", $curl, $bodyMatch);
-    preg_match('/X-Simulator-Signature: (sim-hmac-sha256=[0-9a-f]{64})/', $curl, $sigMatch);
-    expect($bodyMatch[1] ?? null)->not->toBeNull();
-    expect($sigMatch[1] ?? null)->not->toBeNull();
-    expect(SignatureVerifier::verify($bodyMatch[1], $sigMatch[1], 'test-secret'))->toBeTrue();
-
-    // Active UI omits raw simulator cURL output.
-    $this->actingAs($buyer, 'web');
-    $this->get('/pembayaran/'.$payment->id)->assertOk()->assertDontSee('curl -X POST');
-});
-
-test('PAY-42 detail page never outputs unescaped script and has no payment-mutation control', function () {
+test('PAY-42/43 detail page renders transition timeline cleanly and has no payment-mutation control', function () {
     $buyer = m3cBuyer();
     $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
     $payment = $order->payments()->first();
 
-    PaymentHttpTrace::factory()->create([
-        'payment_id' => $payment->id,
-        'order_id' => $order->id,
-        'kind' => 'callback',
-        'request_body_json' => ['payment_id' => $payment->id, 'note' => '<script>alert(1)</script>'],
-        'response_body_json' => ['result' => 'processed', 'payment_status' => 'paid', 'order_status' => 'dibayar'],
-    ]);
-
-    $this->actingAs($buyer, 'web');
-    $this->get('/pembayaran/'.$payment->id)->assertOk()
-        ->assertDontSee('<script>alert(1)</script>', false)
-        ->assertDontSee('Ubah status pembayaran')
-        ->assertDontSee('name="status"', false);
-});
-
-test('PAY-43 payment without HTTP traces renders transition timeline cleanly without developer note', function () {
-    $buyer = m3cBuyer();
-    $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
-    $payment = $order->payments()->first();
-
-    PaymentHttpTrace::query()->where('payment_id', $payment->id)->delete();
     PaymentStatusTransition::factory()->create([
         'payment_id' => $payment->id,
         'from_status' => 'pending',
         'to_status' => 'paid',
-        'trigger' => 'panel_developer',
+        'trigger' => 'callback_gateway',
         'occurred_at' => now(),
     ]);
 
@@ -236,47 +135,8 @@ test('PAY-43 payment without HTTP traces renders transition timeline cleanly wit
         ->assertSee('Timeline Transisi Status')
         ->assertSee('Terbayar')
         ->assertDontSee('panel developer')
-        ->assertDontSee('Simulated HTTP Request');
-});
-
-test('PAY-44 stored traces and rendered payment detail never contain the webhook secret or app key', function () {
-    $buyer = m3cBuyer();
-    $order = m3cPaidOrder($this, $buyer);
-    $payment = $order->payments()->first();
-
-    $secret = 'test-secret';
-    $appKey = (string) config('app.key');
-
-    $traces = PaymentHttpTrace::query()->where('payment_id', $payment->id)->get();
-    expect($traces)->not->toBeEmpty();
-
-    foreach ($traces as $trace) {
-        $dump = (string) json_encode([$trace->request_headers_json, $trace->request_body_json, $trace->response_body_json]);
-        expect($dump)->not->toContain($secret);
-        expect($dump)->not->toContain('sim-hmac-sha256=');
-        if ($appKey !== '') {
-            expect($dump)->not->toContain($appKey);
-        }
-    }
-
-    $this->actingAs($buyer, 'web');
-    $response = $this->get('/pembayaran/'.$payment->id)->assertOk()
-        ->assertDontSee($secret);
-    if ($appKey !== '') {
-        $response->assertDontSee($appKey);
-    }
-});
-
-test('PAY-15/37 payment token page omits HTTP simulator trace panel', function () {
-    $buyer = m3cBuyer();
-    $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
-    $payment = $order->payments()->first();
-
-    $this->get('/pay/sim/'.$payment->payment_token)->assertOk()
-        ->assertSee('Halaman Pembayaran')
-        ->assertDontSee('Simulated HTTP Request')
-        ->assertDontSee('/api/v1/simulator/payments')
-        ->assertDontSee('SIMULASI');
+        ->assertDontSee('Ubah status pembayaran')
+        ->assertDontSee('name="status"', false);
 });
 
 // ---- Result pages + polling: PAY-13/45/46/47 ----
@@ -290,7 +150,6 @@ test('PAY-45 result page for a paid payment shows the summary and links to order
     $this->get('/pembayaran/'.$payment->id.'/hasil')->assertOk()
         ->assertSee('Pembayaran Berhasil')
         ->assertDontSee('SIMULASI')
-        ->assertDontSee('Lihat jejak HTTP')
         ->assertSee($order->order_number)
         ->assertSee($order->formattedTotal())
         ->assertSee('Lihat detail pesanan')
@@ -301,7 +160,7 @@ test('PAY-46 failed result page offers repay with another method and cancel whil
     $buyer = m3cBuyer();
     $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
     $payment = $order->payments()->first();
-    $this->post('/pay/sim/'.$payment->payment_token.'/gagal')->assertOk();
+    m3cWebhook($this, $payment, 'failed')->assertOk();
 
     $this->actingAs($buyer, 'web');
     $this->get('/pembayaran/'.$payment->id.'/hasil')->assertOk()
@@ -317,7 +176,7 @@ test('PAY-46 failed result page after the deadline offers no repay or cancel', f
     $buyer = m3cBuyer();
     $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
     $payment = $order->payments()->first();
-    $this->post('/pay/sim/'.$payment->payment_token.'/gagal')->assertOk();
+    m3cWebhook($this, $payment, 'failed')->assertOk();
 
     try {
         Carbon::setTestNow(now()->addMinutes(31));
@@ -375,13 +234,13 @@ test('PAY-13 polling redirects to the result page for paid/failed/expired and to
     $this->getJson('/pembayaran/'.$payment->id.'/status')->assertOk()
         ->assertJsonPath('redirect_url', null);
 
-    $this->post('/pay/sim/'.$payment->payment_token.'/bayar')->assertOk();
+    m3cWebhook($this, $payment, 'paid')->assertOk();
     $this->getJson('/pembayaran/'.$payment->id.'/status')->assertOk()
         ->assertJsonPath('redirect_url', route('pembayaran.hasil', $payment));
 
     $order2 = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
     $failed = $order2->payments()->first();
-    $this->post('/pay/sim/'.$failed->payment_token.'/gagal')->assertOk();
+    m3cWebhook($this, $failed, 'failed')->assertOk();
     $this->getJson('/pembayaran/'.$failed->id.'/status')->assertOk()
         ->assertJsonPath('redirect_url', route('pembayaran.hasil', $failed));
 
@@ -407,11 +266,11 @@ test('PAY-13 polling redirects to the result page for paid/failed/expired and to
 
 // ---- Receipt: PAY-48 ----
 
-test('PAY-48 receipt for a paid payment shows items, total, method, paid time and the printable SIMULASI label', function () {
+test('PAY-48 receipt for a paid payment shows items, total, method and paid time cleanly', function () {
     $buyer = m3cBuyer();
     $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(['name' => 'Pulpen Struk']), 'qty' => 2]]);
     $payment = $order->payments()->first();
-    $this->post('/pay/sim/'.$payment->payment_token.'/bayar')->assertOk();
+    m3cWebhook($this, $payment, 'paid')->assertOk();
 
     $this->actingAs($buyer, 'web');
     $this->get('/pembayaran/'.$payment->id.'/struk')->assertOk()
@@ -435,11 +294,7 @@ test('PAY-48 receipt redirects a non-paid payment to its result page and is owne
     $this->actingAs(m3cBuyer(), 'web');
     $this->get('/pembayaran/'.$payment->id.'/struk')->assertNotFound();
 
-    // Keluar dulu: tanpa ini sesi masih milik pembeli kedua di atas,
-    // jadi GET "tamu" berikut mengembalikan 404, bukan redirect ke
-    // login (kelas bug sesi yang sama dengan ACC-10/M2/M3a).
     $this->post('/keluar');
-
     $this->get('/pembayaran/'.$payment->id.'/struk')->assertRedirect(route('masuk'));
 });
 
@@ -454,19 +309,13 @@ test('PAY-49 buyer payment history lists only own payments, filters by status, a
 
     $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
     $paid = $order->payments()->first();
-    $this->post('/pay/sim/'.$paid->payment_token.'/bayar')->assertOk();
+    m3cWebhook($this, $paid, 'paid')->assertOk();
 
     $order2 = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
     $failed = $order2->payments()->first();
-    $this->post('/pay/sim/'.$failed->payment_token.'/gagal')->assertOk();
+    m3cWebhook($this, $failed, 'failed')->assertOk();
 
     $otherOrder = m3cCheckout($this, $other, [['product' => m3cProduct(), 'qty' => 1]]);
-
-    // Konsumsi flash "Pesanan ... dibuat." dari checkout $other
-    // sebelum beralih ke $buyer: kalau tidak, nomor pesanan $other
-    // ikut tampil di halaman riwayat lewat flash (bukan lewat tabel)
-    // dan assertDontSee di bawah gagal — kelas bug yang sama dengan
-    // PRD-04 (M2).
     $this->get('/pesanan')->assertOk();
 
     $this->actingAs($buyer, 'web');
@@ -508,8 +357,6 @@ test('PAY-50 payment detail is owner-only: another buyer gets 404, a guest is re
     $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
     $payment = $order->payments()->first();
 
-    // m3cCheckout() sudah actingAs($buyer) di dalamnya, jadi "tamu"
-    // di sini belum tamu — keluar dulu sebelum asersi redirect login.
     $this->post('/keluar');
 
     $this->get('/pembayaran/'.$payment->id)->assertRedirect(route('masuk'));
@@ -520,11 +367,10 @@ test('PAY-50 payment detail is owner-only: another buyer gets 404, a guest is re
     $this->actingAs($buyer, 'web');
     $this->get('/pembayaran/'.$payment->id)->assertOk()
         ->assertSee($order->order_number)
-        ->assertDontSee('Simulated HTTP Request')
         ->assertSee('Timeline Transisi Status');
 });
 
-test('ORD-09 order detail links to the payment detail and its trace', function () {
+test('ORD-09 order detail links to the payment detail', function () {
     $buyer = m3cBuyer();
     $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
     $payment = $order->payments()->first();
@@ -537,14 +383,13 @@ test('ORD-09 order detail links to the payment detail and its trace', function (
 
 // ---- Admin: PAY-51/52/53, guards ----
 
-test('PAY-51 admin payment list filters by status, method and date and shows the origin column', function () {
+test('PAY-51 admin payment list filters by status, method and date without origin column', function () {
     $buyer = m3cBuyer();
     $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]], 'qris');
     $payment = $order->payments()->first();
-    $this->post('/pay/sim/'.$payment->payment_token.'/bayar')->assertOk();
+    m3cWebhook($this, $payment, 'paid')->assertOk();
 
     $order2 = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]], 'va_bri');
-    $payment2 = $order2->payments()->first();
 
     $admin = m3cAdmin();
     $this->actingAs($admin, 'web');
@@ -580,7 +425,6 @@ test('PAY-52 admin payment detail shows the buyer and the timeline, read-only', 
     $this->get('/admin/pembayaran/'.$payment->id)->assertOk()
         ->assertSee($buyer->name)
         ->assertSee($buyer->email)
-        ->assertDontSee('Simulated HTTP Request')
         ->assertSee('Timeline Transisi Status')
         ->assertSee('Terbayar')
         ->assertDontSee('Ubah status pembayaran')
@@ -588,8 +432,6 @@ test('PAY-52 admin payment detail shows the buyer and the timeline, read-only', 
 });
 
 test('M3c guards: a buyer cannot open admin payment pages, a guest is redirected', function () {
-    // Rute admin mengarahkan tamu ke form login dengan aktor
-    // admin_toko terpilih (ACC-08); rute pembeli ke /masuk biasa.
     $this->get('/admin/pembayaran')->assertRedirect(route('masuk', ['aktor' => 'admin_toko']));
     $this->get('/pembayaran')->assertRedirect(route('masuk'));
 
@@ -599,7 +441,7 @@ test('M3c guards: a buyer cannot open admin payment pages, a guest is redirected
     $this->get('/admin/pembayaran/xxx')->assertForbidden();
 });
 
-test('PAY-53 no admin or developer route can change a payment', function () {
+test('PAY-53 no admin route can change a payment', function () {
     $admin = m3cAdmin();
     $buyer = m3cBuyer();
     $order = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
@@ -608,17 +450,12 @@ test('PAY-53 no admin or developer route can change a payment', function () {
     $this->actingAs($admin, 'web');
     $this->post('/admin/pembayaran/'.$payment->id.'/status', ['status' => 'paid'])->assertNotFound();
     $this->post('/admin/pembayaran/'.$payment->id.'/bayar')->assertNotFound();
-    // PUT/DELETE ke path GET yang ada → 405; PRD PAY-53 membolehkan
-    // 404 ATAU 405, jadi terima keduanya (sebelumnya tes ini hanya
-    // menerima 404 dan gagal dengan 405).
     expect($this->put('/admin/pembayaran/'.$payment->id, ['status' => 'paid'])->status())->toBeIn([404, 405]);
     expect($this->delete('/admin/pembayaran/'.$payment->id)->status())->toBeIn([404, 405]);
     $this->get('/admin/pembayaran/'.$payment->id.'/ubah')->assertNotFound();
 
-    // Structural: no registered route under the admin/developer
-    // payment paths accepts a write method.
     foreach (Route::getRoutes() as $route) {
-        if (str_starts_with($route->uri(), 'admin/pembayaran') || str_starts_with($route->uri(), 'developer/pembayaran')) {
+        if (str_starts_with($route->uri(), 'admin/pembayaran')) {
             expect(array_intersect(['POST', 'PUT', 'PATCH', 'DELETE'], $route->methods()))->toBeEmpty(
                 'Route '.$route->uri().' must not accept a write method (PAY-53).'
             );
@@ -647,9 +484,7 @@ test('M3c guards: every new protected route declares guard and role', function (
     $this->assertTrue(true);
 });
 
-// ---- PAY-54 (updated 2026-11-08): SIMULASI removed from visible buyer/admin UI; hidden trace panel & trigger remain ----
-
-test('PAY-54 all payment views omit SIMULASI and hidden 5-tap trace triggers', function () {
+test('PAY-54 all payment views omit SIMULASI and trace triggers', function () {
     $buyer = m3cBuyer();
     $admin = m3cAdmin();
 
@@ -658,12 +493,8 @@ test('PAY-54 all payment views omit SIMULASI and hidden 5-tap trace triggers', f
 
     $this->actingAs($buyer, 'web');
     $this->get('/pesanan/'.$order->id.'/bayar')->assertOk()->assertDontSee('SIMULASI');
-    $this->get('/pay/sim/'.$paid->payment_token)->assertOk()
-        ->assertDontSee('SIMULASI')
-        ->assertDontSee('data-trace-trigger', false)
-        ->assertDontSee('trace-popup', false);
 
-    $this->post('/pay/sim/'.$paid->payment_token.'/bayar')->assertOk();
+    m3cWebhook($this, $paid, 'paid')->assertOk();
     $this->get('/pembayaran/'.$paid->id.'/hasil')->assertOk()->assertDontSee('SIMULASI');
     $this->get('/pembayaran/'.$paid->id.'/struk')->assertOk()->assertDontSee('SIMULASI');
     $this->get('/pembayaran')->assertOk()->assertDontSee('SIMULASI');
@@ -681,7 +512,7 @@ test('PAY-54 all payment views omit SIMULASI and hidden 5-tap trace triggers', f
 
     $order2 = m3cCheckout($this, $buyer, [['product' => m3cProduct(), 'qty' => 1]]);
     $failed = $order2->payments()->first();
-    $this->post('/pay/sim/'.$failed->payment_token.'/gagal')->assertOk();
+    m3cWebhook($this, $failed, 'failed')->assertOk();
 
     $this->actingAs($buyer, 'web');
     $this->get('/pembayaran/'.$failed->id.'/hasil')->assertOk()->assertDontSee('SIMULASI');

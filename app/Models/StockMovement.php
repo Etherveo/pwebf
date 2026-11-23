@@ -19,8 +19,7 @@ class StockMovement extends Model
 
     protected $fillable = [
         'product_id', 'type', 'delta_on_hand', 'delta_reserved',
-        'order_id', 'actor_type', 'actor_id', 'note', 'origin',
-        'simulation_run_id', 'created_at',
+        'order_id', 'actor_type', 'actor_id', 'note', 'created_at',
     ];
 
     protected function casts(): array

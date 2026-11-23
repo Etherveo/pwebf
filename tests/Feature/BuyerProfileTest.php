@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Address;
-use App\Models\Developer;
 use App\Models\User;
 
 test('guest is redirected to /masuk from all buyer profile routes', function () {
@@ -217,20 +216,11 @@ test('security: user_id and email in payload are ignored and cannot overwrite an
     expect($attacker->addresses()->first()->recipient_name)->toBe('Alamat Penyerang');
 });
 
-test('security: admin_toko and developer cannot access buyer profile routes', function () {
+test('security: admin_toko cannot access buyer profile routes', function () {
     $admin = User::factory()->admin()->create();
-    $developer = Developer::create([
-        'name' => 'Dev Ira',
-        'email' => 'dev@ira.test',
-        'password' => 'rahasia123',
-        'role' => 'dev',
-    ]);
 
     $this->actingAs($admin, 'web')->get('/profil')->assertForbidden();
     $this->actingAs($admin, 'web')->get('/profil/ubah')->assertForbidden();
     $this->actingAs($admin, 'web')->put('/profil', ['name' => 'Admin'])->assertForbidden();
     $this->actingAs($admin, 'web')->put('/profil/alamat', ['recipient_name' => 'Admin'])->assertForbidden();
-
-    $this->actingAs($developer, 'developer')->get('/profil')->assertForbidden();
-    $this->actingAs($developer, 'developer')->put('/profil', ['name' => 'Dev'])->assertForbidden();
 });

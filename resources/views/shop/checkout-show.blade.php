@@ -65,7 +65,7 @@
                             <div class="admin-field">
                                 <label for="pickup_date" class="admin-label">Tanggal pengambilan</label>
                                 <input class="input" id="pickup_date" name="pickup_date" type="date" value="{{ old('pickup_date') }}" required
-                                       min="{{ \Carbon\Carbon::now(config('ira.reporting_timezone'))->toDateString() }}"
+                                       min="{{ \Carbon\Carbon::now(config('store.reporting_timezone'))->toDateString() }}"
                                        @error('pickup_date') aria-invalid="true" aria-describedby="pickup_date-error" @enderror>
                                 @error('pickup_date')<p class="alert-error field-error" id="pickup_date-error">{{ $message }}</p>@enderror
                             </div>

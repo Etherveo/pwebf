@@ -22,9 +22,6 @@ class BuyerAccountController extends Controller
             ->when(in_array($request->input('status'), ['aktif', 'nonaktif'], true), function ($query) use ($request) {
                 $query->where('is_active', $request->input('status') === 'aktif');
             })
-            ->when(in_array($request->input('asal'), ['normal', 'developer_simulation'], true), function ($query) use ($request) {
-                $query->where('origin', $request->input('asal'));
-            })
             ->when($request->filled('cari'), function ($query) use ($request) {
                 $term = '%'.mb_strtolower((string) $request->input('cari')).'%';
                 $query->where(function ($inner) use ($term) {

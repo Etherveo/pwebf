@@ -30,7 +30,7 @@ class OrderStateMachine
     ];
 
     public const TRIGGERS = [
-        'pembeli', 'callback_simulasi', 'job_kedaluwarsa', 'admin', 'panel_developer',
+        'pembeli', 'callback_gateway', 'job_kedaluwarsa', 'admin',
     ];
 
     public static function canTransition(string $from, string $to): bool
@@ -99,8 +99,6 @@ class OrderStateMachine
             'actor_id' => $actorId,
             'reason' => $reason,
             'occurred_at' => $stamp,
-            'origin' => $order->origin,
-            'simulation_run_id' => $order->simulation_run_id,
             'created_at' => $stamp,
         ]);
     }

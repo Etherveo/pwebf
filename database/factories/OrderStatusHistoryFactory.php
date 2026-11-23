@@ -22,8 +22,6 @@ class OrderStatusHistoryFactory extends Factory
             'actor_id' => null,
             'reason' => null,
             'occurred_at' => now(),
-            'origin' => 'normal',
-            'simulation_run_id' => null,
             'created_at' => now(),
         ];
     }

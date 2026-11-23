@@ -137,7 +137,7 @@ class PaymentInstructionController extends Controller
         }
 
         return redirect()->route('pesanan.bayar', $found)
-            ->with('status', 'Pembayaran baru dibuat. Batas waktu bayar tetap '.$found->payment_deadline_at->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i').' WITA.');
+            ->with('status', 'Pembayaran baru dibuat. Batas waktu bayar tetap '.$found->payment_deadline_at->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i').' WITA.');
     }
 
     // PAY-14: the QR cannot be opened from another device when the

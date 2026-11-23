@@ -37,7 +37,6 @@ class CheckoutService
         private readonly OrderStateMachine $orders,
         private readonly PaymentStateMachine $payments,
         private readonly PaymentService $paymentService,
-        private readonly ActivityRecorder $events,
     ) {}
 
     // ORD-01: the checkout summary data (cart items, server total,
@@ -52,7 +51,7 @@ class CheckoutService
     // outside 1..1440 is a configuration error, not a checkout error.
     public function expiryMinutes(): int
     {
-        $minutes = (int) config('ira.payment_expiry_minutes', 30);
+        $minutes = (int) config('store.payment_expiry_minutes', 30);
 
         if ($minutes < 1 || $minutes > 1440) {
             throw new LogicException('PAYMENT_EXPIRY_MINUTES harus 1..1440 menit, saat ini: '.$minutes.'.');
@@ -133,33 +132,19 @@ class CheckoutService
                 'total_idr' => $total,
                 'payment_deadline_at' => now()->addMinutes($this->expiryMinutes()),
                 'paid_at' => null,
-                // Jadwal pengambilan (keputusan Ren 2026-11-09): dari
-                // checkout, UTC; NULL bila pemanggil tidak memberinya
-                // (mis. pesanan simulasi tidak punya jadwal).
                 'pickup_at' => $pickupAt,
                 'checkout_key' => $checkoutKey,
-                // ACC-15/K-04: UI checkout is normal activity, even for
-                // a simulation account; see ActivityRecorder.
-                'origin' => 'normal',
-                'simulation_run_id' => null,
             ]);
 
             foreach ($lines as $line) {
                 OrderItem::create(array_merge($line, [
                     'order_id' => $order->id,
-                    'origin' => 'normal',
-                    'simulation_run_id' => null,
                 ]));
             }
 
             // STK-02: reserve inside the same transaction as the order.
             $order->load('items');
             $this->stock->reserve($order, 'pembeli', $user->id);
-
-            // EVT-04: one booking event per item, same transaction.
-            foreach ($order->items as $orderItem) {
-                $this->events->recordBooking($orderItem, $user);
-            }
 
             $this->orders->recordInitial($order, 'pembeli', 'pembeli', $user->id);
 
@@ -200,10 +185,6 @@ class CheckoutService
             } else {
                 $this->orders->transition($order, 'dibatalkan', 'pembeli', 'pembeli', $user->id, 'buyer');
                 $this->stock->release($order, 'pembeli', $user->id);
-
-                foreach ($order->items as $item) {
-                    $this->events->recordCancel($item, $user, 'buyer');
-                }
             }
 
             return $order->fresh();

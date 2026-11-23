@@ -8,11 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-// M1 ACC-07: status is checked on every authenticated request, not only
-// at login. An account deactivated mid-session becomes invalid on the
-// next request: its web guard is logged out and it is sent back to the
-// matching login form with a clear message. Developer accounts have no
-// is_active column (blueprint §6.2), so they are skipped here.
+// Status is checked on every authenticated request: deactivated accounts
+// are logged out and redirected back to /masuk with a clear error message.
 class EnsureActiveAccount
 {
     public function handle(Request $request, Closure $next): Response
@@ -20,11 +17,9 @@ class EnsureActiveAccount
         $user = $request->user();
 
         if ($user instanceof User && $user->is_active === false) {
-            $guard = $this->guardFor($request);
-            Auth::guard($guard)->logout();
+            Auth::guard('web')->logout();
             $request->session()->regenerate();
 
-            // Keputusan 2026-11-05: login disatukan — unified form, actor pre-selected.
             $login = $request->is('admin/*') || $request->is('admin')
                 ? route('masuk', ['aktor' => 'admin_toko'])
                 : route('masuk');
@@ -35,14 +30,5 @@ class EnsureActiveAccount
         }
 
         return $next($request);
-    }
-
-    private function guardFor(Request $request): string
-    {
-        if ($request->is('developer/*') || $request->is('developer')) {
-            return 'developer';
-        }
-
-        return 'web';
     }
 }

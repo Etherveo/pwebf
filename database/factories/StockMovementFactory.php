@@ -23,8 +23,6 @@ class StockMovementFactory extends Factory
             'actor_type' => 'admin_toko',
             'actor_id' => User::factory()->admin(),
             'note' => null,
-            'origin' => 'normal',
-            'simulation_run_id' => null,
             'created_at' => now(),
         ];
     }

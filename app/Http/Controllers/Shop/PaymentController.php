@@ -6,24 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Services\OrderExpiryService;
 use App\Services\PaymentService;
-use App\Services\PaymentTracePanel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
-// M3c PAY-45..50. Buyer payment history (PAY-49), payment detail
-// with the HTTP panel + timeline (PAY-50), result pages (PAY-45..47)
-// and the printable receipt (PAY-48). Every payment is resolved
-// scoped to the acting buyer (user_id + id), so another buyer's
-// payment behaves exactly like a missing one (ACC-09). Overdue
-// orders expire on access (PAY-35) before the page renders.
+// Buyer payment history, payment detail with status transition timeline,
+// payment result pages, and printable receipt (scoped to acting buyer).
 class PaymentController extends Controller
 {
     public function __construct(
         private readonly OrderExpiryService $expiry,
         private readonly PaymentService $payments,
-        private readonly PaymentTracePanel $panel,
     ) {}
 
     // PAY-49: own payments, newest first, paginated, filter by status.
@@ -45,7 +39,6 @@ class PaymentController extends Controller
         return view('payments.index', ['payments' => $payments]);
     }
 
-    // PAY-50: own payment detail + HTTP panel + timeline.
     public function show(string $payment): View
     {
         $found = $this->findOwned($payment);
@@ -56,7 +49,7 @@ class PaymentController extends Controller
             'payment' => $found,
             'order' => $found->order,
             'method' => $this->payments->method($found->payment_method),
-            'panel' => $this->panel->forPayment($found),
+            'transitions' => $found->transitions->sortBy('occurred_at')->values(),
         ]);
     }
 

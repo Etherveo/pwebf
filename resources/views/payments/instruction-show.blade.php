@@ -36,39 +36,54 @@
 
                 @if (($method['kind'] ?? 'qr') === 'va')
                     <div class="pay-va-box">
-                        <h3 class="pay-sub-heading">Nomor VA</h3>
-                        <p class="pay-sim-caption"><strong>Nomor VA — bukan nomor rekening.</strong></p>
+                        <h3 class="pay-sub-heading">Nomor Virtual Account</h3>
                         <div class="pay-va-row">
                             <p class="va-number"><strong>{{ $payment->formattedReference() }}</strong></p>
                             <button type="button" class="btn-secondary" data-copy-text="{{ $payment->reference_code }}" data-copy-label="Salin">Salin</button>
                         </div>
                     </div>
 
-                    <div class="pay-qr-section">
-                        <h3 class="pay-sub-heading">Kode QR pendamping</h3>
-                        <p class="admin-hint">Pindai untuk membuka halaman pembayaran:</p>
-                        <div class="qr-small pay-qr-frame" data-qr-url="{{ $payment->qr_url }}">
-                            <img class="qr-image" alt="Kode QR pendamping pembayaran" hidden>
-                            {!! $qrHtml !!}
+                    @if ($payment->qr_url)
+                        <div class="pay-qr-section">
+                            <h3 class="pay-sub-heading">Kode QR pendamping</h3>
+                            <p class="admin-hint">Pindai untuk membuka halaman pembayaran:</p>
+                            <div class="qr-small pay-qr-frame" data-qr-url="{{ $payment->qr_url }}">
+                                <img class="qr-image" alt="Kode QR pendamping pembayaran" hidden>
+                                {!! $qrHtml !!}
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 @else
-                    <div class="pay-qr-section">
-                        <h3 class="pay-sub-heading">Kode QR</h3>
-                        <div class="qr-large pay-qr-frame" data-qr-url="{{ $payment->qr_url }}">
-                            <img class="qr-image" alt="Kode QR pembayaran" width="240" height="240" hidden>
-                            {!! $qrHtml !!}
+                    <div class="pay-va-box">
+                        <h3 class="pay-sub-heading">Kode referensi pembayaran</h3>
+                        <div class="pay-va-row">
+                            <p class="va-number"><strong>{{ $payment->reference_code }}</strong></p>
+                            <button type="button" class="btn-secondary" data-copy-text="{{ $payment->reference_code }}" data-copy-label="Salin">Salin</button>
                         </div>
-                        <p class="pay-url-fallback">Atau buka tautan ini: <a class="admin-cell-link" href="{{ $payment->qr_url }}">{{ $payment->qr_url }}</a></p>
                     </div>
+
+                    @if ($payment->qr_url)
+                        <div class="pay-qr-section">
+                            <h3 class="pay-sub-heading">Kode QR</h3>
+                            <div class="qr-large pay-qr-frame" data-qr-url="{{ $payment->qr_url }}">
+                                <img class="qr-image" alt="Kode QR pembayaran" width="240" height="240" hidden>
+                                {!! $qrHtml !!}
+                            </div>
+                            <p class="pay-url-fallback">Atau buka tautan ini: <a class="admin-cell-link" href="{{ $payment->qr_url }}">{{ $payment->qr_url }}</a></p>
+                        </div>
+                    @endif
                 @endif
 
                 <div class="pay-cta-stack">
-                    <a class="btn-primary buyer-cta-block" href="{{ $payment->qr_url }}" target="_blank" rel="noopener">Buka Halaman Pembayaran</a>
+                    @if ($payment->qr_url)
+                        <a class="btn-primary buyer-cta-block" href="{{ $payment->qr_url }}" target="_blank" rel="noopener">Buka Halaman Pembayaran</a>
+                    @else
+                        <p class="admin-info-box">Pesanan ini siap menerima konfirmasi pembayaran dari gateway pembayaran. Simpan kode referensi di atas sampai transaksi selesai.</p>
+                    @endif
                     <a class="btn-secondary buyer-cta-block" href="{{ route('pesanan.show', $order) }}">Kembali ke detail pesanan</a>
                 </div>
 
-                @if ($isLoopback)
+                @if ($payment->qr_url && $isLoopback)
                     <div class="pay-loopback-box">
                         <p><strong>Perhatian:</strong> alamat aplikasi ini adalah loopback (localhost), jadi QR tidak dapat dibuka dari perangkat lain. Gunakan tombol di atas dari perangkat ini.</p>
                     </div>
@@ -100,11 +115,11 @@
                     </div>
                     <div class="admin-kv-row">
                         <dt class="admin-kv-row-label">Dibuat</dt>
-                        <dd class="admin-kv-row-val">{{ $payment->created_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
+                        <dd class="admin-kv-row-val">{{ $payment->created_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
                     </div>
                     <div class="admin-kv-row">
                         <dt class="admin-kv-row-label">Kedaluwarsa</dt>
-                        <dd class="admin-kv-row-val">{{ $payment->expires_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
+                        <dd class="admin-kv-row-val">{{ $payment->expires_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</dd>
                     </div>
                 </dl>
 

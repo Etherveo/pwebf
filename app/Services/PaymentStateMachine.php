@@ -46,7 +46,6 @@ class PaymentStateMachine
     public function __construct(
         private readonly OrderStateMachine $orders,
         private readonly StockService $stock,
-        private readonly ActivityRecorder $events,
     ) {}
 
     // Single status change with its transition row. Caller owns the
@@ -85,10 +84,9 @@ class PaymentStateMachine
         $this->writeTransition($payment, null, 'pending', $trigger, null, $at);
     }
 
-    // PAY-29 / STK-03 / EVT-05: pending -> paid, order -> dibayar,
-    // stock confirmed (reserved -= qty, on-hand -= qty), one purchase
-    // event per item. All in one transaction.
-    public function markPaid(Payment $payment, string $trigger = 'callback_simulasi', ?string $requestId = null): Payment
+    // PAY-29 / STK-03: pending -> paid, order -> dibayar,
+    // stock confirmed (reserved -= qty, on-hand -= qty), in one transaction.
+    public function markPaid(Payment $payment, string $trigger = 'callback_gateway', ?string $requestId = null): Payment
     {
         return DB::transaction(function () use ($payment, $trigger, $requestId) {
             $payment = $payment->fresh();
@@ -116,19 +114,13 @@ class PaymentStateMachine
             $this->orders->transition($order, 'dibayar', $trigger, 'sistem', null);
             $this->stock->confirm($order, 'sistem', null);
 
-            foreach ($order->items as $item) {
-                $this->events->recordPurchase($item, $order->user);
-            }
-
             return $payment->fresh();
         });
     }
 
-    // M3b PAY-28/PAY-30: pending -> failed. ONLY the payment changes:
-    // the order stays menunggu_pembayaran, no purchase event is
-    // recorded, and the stock stays reserved (U-12) until the order
-    // is cancelled or expires. The buyer may repay (PAY-31) or cancel.
-    public function markFailed(Payment $payment, string $trigger = 'callback_simulasi', ?string $requestId = null): Payment
+    // PAY-28/PAY-30: pending -> failed. ONLY the payment changes:
+    // the order stays menunggu_pembayaran and stock stays reserved.
+    public function markFailed(Payment $payment, string $trigger = 'callback_gateway', ?string $requestId = null): Payment
     {
         return DB::transaction(function () use ($payment, $trigger, $requestId) {
             $payment = $payment->fresh();
@@ -170,10 +162,6 @@ class PaymentStateMachine
             $this->orders->transition($order, 'kedaluwarsa', $trigger, 'sistem', null, 'expired');
             $this->stock->release($order, 'sistem', null);
 
-            foreach ($order->items as $item) {
-                $this->events->recordCancel($item, $order->user, 'expired');
-            }
-
             return $payment->fresh();
         });
     }
@@ -203,10 +191,6 @@ class PaymentStateMachine
             $this->orders->transition($order, 'dibatalkan', 'pembeli', 'pembeli', $actor?->id, 'buyer');
             $this->stock->release($order, 'pembeli', $actor?->id);
 
-            foreach ($order->items as $item) {
-                $this->events->recordCancel($item, $order->user, 'buyer');
-            }
-
             return $payment->fresh();
         });
     }
@@ -228,8 +212,6 @@ class PaymentStateMachine
             'trigger' => $trigger,
             'request_id' => $requestId,
             'occurred_at' => $stamp,
-            'origin' => $payment->origin,
-            'simulation_run_id' => $payment->simulation_run_id,
             'created_at' => $stamp,
         ]);
     }

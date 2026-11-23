@@ -1,22 +1,22 @@
 <?php
 
-use App\Models\Event;
+use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\Payment;
+use App\Models\PaymentStatusTransition;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Services\OrderExpiryService;
 use App\Services\OrderStateMachine;
 use App\Services\PaymentStateMachine;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-// M3a CRT-01..06, STK-02..06, ORD-01..14, EVT-01..09, PAY-01..03/05.
-// No Python, no Figma images, no external HTTP. The paid path is
-// tested here by calling PaymentStateMachine directly; the M3b
-// webhook/simulator path is tested in PaymentM3bTest.
+// Cart, stock, checkout, order cancellation, expiry, and state machine flows.
 
 function m3Buyer(): User
 {
@@ -79,7 +79,7 @@ function m3PaidOrder($t, User $buyer, array $lines): Order
 
 // ---- CRT ----
 
-test('CRT-01 adding a product to the cart stores the item and records one add_to_cart event', function () {
+test('CRT-01 adding a product to the cart stores the item cleanly', function () {
     $buyer = m3Buyer();
     $product = m3Product(['name' => 'Pulpen CRT', 'price_idr' => 5000, 'stock_on_hand' => 10]);
 
@@ -88,12 +88,6 @@ test('CRT-01 adding a product to the cart stores the item and records one add_to
         ->assertRedirect('/keranjang');
 
     $this->assertDatabaseHas('cart_items', ['quantity' => 2]);
-    $this->assertDatabaseHas('events', [
-        'event_type' => 'add_to_cart',
-        'user_id' => $buyer->id,
-        'product_id' => $product->id,
-    ]);
-    $this->assertDatabaseCount('events', 1);
     $this->get('/keranjang')->assertOk()->assertSee('Pulpen CRT')->assertSee('Rp 10.000');
 });
 
@@ -107,17 +101,14 @@ test('CRT-01 adding the same product merges quantities, capped at 99 and at avai
 
     $this->assertDatabaseCount('cart_items', 1);
     $this->assertDatabaseHas('cart_items', ['quantity' => 5]);
-    // One add_to_cart event per successful add action.
-    $this->assertDatabaseCount('events', 2);
 
     // Merged total above available stock is rejected, old quantity kept.
     $this->post('/keranjang/tambah', ['product_id' => $product->id, 'quantity' => 6])
         ->assertSessionHasErrors('quantity');
     $this->assertDatabaseHas('cart_items', ['quantity' => 5]);
-    $this->assertDatabaseCount('events', 2);
 });
 
-test('CRT-01 adding fails without an event: inactive product, quantity above 99, quantity above stock', function () {
+test('CRT-01 adding fails cleanly: inactive product, quantity above 99, quantity above stock', function () {
     $buyer = m3Buyer();
     $inactive = m3Product(['is_active' => false]);
     $scarce = m3Product(['stock_on_hand' => 3]);
@@ -132,17 +123,15 @@ test('CRT-01 adding fails without an event: inactive product, quantity above 99,
         ->assertSessionHasErrors('quantity');
 
     $this->assertDatabaseCount('cart_items', 0);
-    $this->assertDatabaseCount('events', 0);
 });
 
-test('CRT-02 changing quantity works, out-of-range keeps the old quantity and records no event', function () {
+test('CRT-02 changing quantity works and out-of-range keeps the old quantity', function () {
     $buyer = m3Buyer();
     $product = m3Product(['stock_on_hand' => 3]);
 
     $this->actingAs($buyer, 'web');
     $this->post('/keranjang/tambah', ['product_id' => $product->id, 'quantity' => 2])->assertRedirect('/keranjang');
-    $itemId = \App\Models\CartItem::first()->id;
-    $this->assertDatabaseCount('events', 1);
+    $itemId = CartItem::first()->id;
 
     // Valid change: 2 -> 3.
     $this->put('/keranjang/'.$itemId, ['quantity' => 3])->assertRedirect('/keranjang');
@@ -155,22 +144,18 @@ test('CRT-02 changing quantity works, out-of-range keeps the old quantity and re
     // Above 99: rejected by the form request, quantity stays 3.
     $this->put('/keranjang/'.$itemId, ['quantity' => 100])->assertSessionHasErrors('quantity');
     $this->assertDatabaseHas('cart_items', ['id' => $itemId, 'quantity' => 3]);
-
-    // No event for any quantity change.
-    $this->assertDatabaseCount('events', 1);
 });
 
-test('CRT-03 removing an item deletes it and records no event', function () {
+test('CRT-03 removing an item deletes it cleanly', function () {
     $buyer = m3Buyer();
     $product = m3Product();
 
     $this->actingAs($buyer, 'web');
     $this->post('/keranjang/tambah', ['product_id' => $product->id, 'quantity' => 1])->assertRedirect('/keranjang');
-    $itemId = \App\Models\CartItem::first()->id;
+    $itemId = CartItem::first()->id;
 
     $this->delete('/keranjang/'.$itemId)->assertRedirect('/keranjang');
     $this->assertDatabaseCount('cart_items', 0);
-    $this->assertDatabaseCount('events', 1); // only the add_to_cart
     $this->get('/keranjang')->assertOk()->assertSee('Keranjang masih kosong.');
 });
 
@@ -217,7 +202,7 @@ test('CRT-05 a blocked item is flagged on the cart page and blocks checkout unti
 
     // Removing the item unblocks checkout (cart is empty, so the
     // checkout page itself redirects back to the cart).
-    $itemId = \App\Models\CartItem::first()->id;
+    $itemId = CartItem::first()->id;
     $this->delete('/keranjang/'.$itemId)->assertRedirect('/keranjang');
     $this->get('/keranjang')->assertOk()->assertDontSee('Perhatian:');
 });
@@ -243,7 +228,7 @@ test('CRT-06 cart persists per account and another account cannot read or change
 
     $this->actingAs($buyer, 'web');
     $this->post('/keranjang/tambah', ['product_id' => $product->id, 'quantity' => 2])->assertRedirect('/keranjang');
-    $itemId = \App\Models\CartItem::first()->id;
+    $itemId = CartItem::first()->id;
 
     // The other account sees an empty cart and cannot touch the item.
     $this->actingAs($other, 'web');
@@ -259,12 +244,7 @@ test('CRT-06 cart persists per account and another account cannot read or change
 
 // ---- ORD / STK: checkout ----
 
-test('ORD-02 checkout is atomic: order, snapshot items, reserved stock, booking events, empty cart, pending payment', function () {
-    // qr_url dibuat dari config('app.url'), jadi kunci ke localhost
-    // di sini: tes ini tidak boleh tergantung APP_URL di .env mesin
-    // yang menjalankannya (mis. IP LAN saat tes scan HP).
-    config()->set('app.url', 'http://localhost');
-
+test('ORD-02 checkout is atomic: order, snapshot items, reserved stock, empty cart, pending payment', function () {
     $buyer = m3Buyer();
     $a = m3Product(['name' => 'Pulpen Checkout', 'price_idr' => 5000, 'stock_on_hand' => 10]);
     $b = m3Product(['name' => 'Buku Checkout', 'price_idr' => 2500, 'stock_on_hand' => 10]);
@@ -276,8 +256,7 @@ test('ORD-02 checkout is atomic: order, snapshot items, reserved stock, booking 
 
     expect($order->status)->toBe('menunggu_pembayaran');
     expect($order->total_idr)->toBe(12500);
-    expect($order->order_number)->toMatch('/^IRA-\d{6}-[A-HJ-NP-Z2-9]{6}$/');
-    // Carbon 3 mengembalikan float untuk diffInMinutes, jadi cast ke int.
+    expect($order->order_number)->toMatch('/^JBR-\d{6}-[A-HJ-NP-Z2-9]{6}$/');
     expect((int) $order->created_at->diffInMinutes($order->payment_deadline_at))->toBe(30);
 
     $items = $order->items()->orderBy('product_id')->get();
@@ -295,33 +274,20 @@ test('ORD-02 checkout is atomic: order, snapshot items, reserved stock, booking 
         'product_id' => $a->id, 'type' => 'cadangkan', 'delta_reserved' => 2, 'order_id' => $order->id,
     ]);
 
-    // One booking event per item, in the order transaction.
-    $this->assertDatabaseCount('events', 4); // 2 add_to_cart + 2 booking
-    expect(Event::where('event_type', 'booking')->count())->toBe(2);
-    expect(Event::where('event_type', 'booking')->whereNotNull('order_item_id')->count())->toBe(2);
-
     // Cart is empty after checkout.
     $this->assertDatabaseCount('cart_items', 0);
 
-    // One pending payment, amount = server total, expires at deadline.
+    // One pending payment, amount = server total, expires at deadline, neutral provider.
     $payment = $order->payments()->first();
     expect($payment)->not->toBeNull();
     expect($payment->status)->toBe('pending');
     expect($payment->amount_idr)->toBe(12500);
     expect($payment->payment_method)->toBe('qris');
-    expect($payment->provider)->toBe('simulator');
-    expect($payment->is_simulated)->toBeTrue();
-    // M3b PAY-06: qr_url is filled from the adapter (internal
-    // simulator gateway): APP_URL + /pay/sim/<token>. APP_URL di .env
-    // bisa membawa port (mis. :8000), jadi asersi ini tidak mengunci
-    // port — yang dijamin adalah host localhost + path-nya.
-    expect($payment->qr_url)->toStartWith('http://localhost');
-    expect($payment->qr_url)->toContain('/pay/sim/');
-    expect($payment->qr_url)->toContain($payment->payment_token);
+    expect($payment->provider)->toBe('manual');
+    expect($payment->qr_url)->toBeNull();
     expect($payment->expires_at->equalTo($order->payment_deadline_at))->toBeTrue();
-    expect($payment->reference_code)->toStartWith('SIMQR-');
+    expect($payment->reference_code)->toStartWith('PAY-');
     expect(strlen($payment->payment_token))->toBe(43);
-    expect($order->origin)->toBe('normal');
 
     // Initial history row: null -> menunggu_pembayaran, trigger pembeli.
     expect(OrderStatusHistory::where('order_id', $order->id)->count())->toBe(1);
@@ -336,27 +302,7 @@ test('ORD-02 checkout is atomic: order, snapshot items, reserved stock, booking 
     ]);
 });
 
-test('PAY-06 qr_url mengikuti APP_URL agar bisa discan dari perangkat lain', function () {
-    // Regresi: dulu qr_url dibuat dengan url(), yang mengikuti host
-    // request saat ini — dan di dalam internal dispatch host itu
-    // selalu localhost. Akibatnya ganti APP_URL di .env tidak pernah
-    // mengubah QR, bahkan untuk pesanan baru. Sekarang qr_url dibuat
-    // dari config('app.url') (QrPayload::simPageUrl).
-    config()->set('app.url', 'http://192.168.1.5:8000');
-
-    $buyer = m3Buyer();
-    $product = m3Product(['name' => 'Pulpen QR', 'price_idr' => 5000, 'stock_on_hand' => 10]);
-
-    $order = m3Checkout($this, $buyer, [
-        ['product' => $product, 'qty' => 1],
-    ]);
-
-    $payment = $order->payments()->first();
-    expect($payment->qr_url)->toStartWith('http://192.168.1.5:8000/pay/sim/');
-    expect($payment->qr_url)->toContain($payment->payment_token);
-});
-
-test('ORD-01 checkout summary shows items, server total and the six simulation methods', function () {
+test('ORD-01 checkout summary shows items, server total and payment methods', function () {
     $buyer = m3Buyer();
     $product = m3Product(['name' => 'Pulpen Ringkas', 'price_idr' => 7000]);
 
@@ -388,7 +334,7 @@ test('ORD-02 checkout with a VA method creates a 16-digit dummy VA reference', f
     expect($payment->reference_code)->toMatch('/^99901\d{11}$/');
 });
 
-test('ORD-02 checkout failure rolls everything back: no order, no reservation, no events, cart kept', function () {
+test('ORD-02 checkout failure rolls everything back: no order, no reservation, cart kept', function () {
     $buyer = m3Buyer();
     $a = m3Product(['name' => 'Pulpen Aman', 'stock_on_hand' => 5]);
     $b = m3Product(['name' => 'Buku Gagal', 'stock_on_hand' => 5]);
@@ -406,7 +352,6 @@ test('ORD-02 checkout failure rolls everything back: no order, no reservation, n
     $this->assertDatabaseCount('orders', 0);
     $this->assertDatabaseCount('order_items', 0);
     $this->assertDatabaseCount('payments', 0);
-    expect(Event::where('event_type', 'booking')->count())->toBe(0);
     expect($a->fresh()->stock_reserved)->toBe(0);
     expect(StockMovement::where('type', 'cadangkan')->count())->toBe(0);
     $this->assertDatabaseCount('cart_items', 2);
@@ -448,21 +393,9 @@ test('ORD-04 a product price change after checkout does not change the old order
     expect($order->items()->first()->product_name_snapshot)->toBe($product->name);
 });
 
-test('EVT-09 a simulation account checking out through the normal UI creates normal-origin rows (ACC-15/K-04)', function () {
-    $simBuyer = User::factory()->simulation()->create();
-    $order = m3Checkout($this, $simBuyer, [['product' => m3Product(), 'qty' => 1]]);
-
-    expect($order->origin)->toBe('normal');
-    expect($order->simulation_run_id)->toBeNull();
-    expect($order->items()->first()->origin)->toBe('normal');
-    expect($order->payments()->first()->origin)->toBe('normal');
-    expect(Event::where('order_id', $order->id)->where('origin', 'normal')->count())
-        ->toBeGreaterThan(0);
-});
-
 // ---- ORD-07 cancel ----
 
-test('ORD-07 buyer cancels their own waiting order: stock released, payment cancelled, cancel events with reason buyer', function () {
+test('ORD-07 buyer cancels their own waiting order: stock released, payment cancelled', function () {
     $buyer = m3Buyer();
     $product = m3Product(['stock_on_hand' => 10]);
     $order = m3Checkout($this, $buyer, [['product' => $product, 'qty' => 3]]);
@@ -479,9 +412,6 @@ test('ORD-07 buyer cancels their own waiting order: stock released, payment canc
     expect($product->fresh()->stock_available)->toBe(10);
     $this->assertDatabaseHas('stock_movements', [
         'product_id' => $product->id, 'type' => 'lepas', 'delta_reserved' => -3, 'order_id' => $order->id,
-    ]);
-    $this->assertDatabaseHas('events', [
-        'event_type' => 'cancel', 'order_item_id' => $order->items()->first()->id, 'reason' => 'buyer',
     ]);
     $this->assertDatabaseHas('order_status_histories', [
         'order_id' => $order->id, 'from_status' => 'menunggu_pembayaran',
@@ -510,7 +440,7 @@ test('ORD-07 a paid or final order cannot be cancelled, and another buyer cannot
 
 // ---- Expiry (on-access) ----
 
-test('ORD-05/PAY-32 opening an overdue order expires it on access: stock released, cancel events with reason expired, once only', function () {
+test('ORD-05/PAY-32 opening an overdue order expires it on access: stock released once only', function () {
     $buyer = m3Buyer();
     $product = m3Product(['stock_on_hand' => 10]);
     $order = m3Checkout($this, $buyer, [['product' => $product, 'qty' => 2]]);
@@ -525,17 +455,13 @@ test('ORD-05/PAY-32 opening an overdue order expires it on access: stock release
         expect($order->status)->toBe('kedaluwarsa');
         expect($order->payments()->first()->status)->toBe('expired');
         expect($product->fresh()->stock_reserved)->toBe(0);
-        $this->assertDatabaseHas('events', [
-            'event_type' => 'cancel', 'order_item_id' => $order->items()->first()->id, 'reason' => 'expired',
-        ]);
         $this->assertDatabaseHas('order_status_histories', [
             'order_id' => $order->id, 'to_status' => 'kedaluwarsa',
             'trigger' => 'job_kedaluwarsa', 'reason' => 'expired',
         ]);
 
-        // Second visit: still exactly one cancel event, still kedaluwarsa.
+        // Second visit: still kedaluwarsa, stock released once only.
         $this->get('/pesanan/'.$order->id)->assertOk();
-        expect(Event::where('event_type', 'cancel')->count())->toBe(1);
         expect(StockMovement::where('type', 'lepas')->count())->toBe(1);
     } finally {
         Carbon::setTestNow();
@@ -567,7 +493,7 @@ test('OrderExpiryService expires overdue orders in batch and skips the rest', fu
         'payment_deadline_at' => now()->subMinute(),
     ]);
 
-    $expired = app(\App\Services\OrderExpiryService::class)->expireOverdue();
+    $expired = app(OrderExpiryService::class)->expireOverdue();
 
     expect($expired)->toBe(1);
     expect($overdue->fresh()->status)->toBe('kedaluwarsa');
@@ -589,7 +515,7 @@ test('ORD-06 order state machine accepts only the PRD 9.2 transitions and record
     expect(OrderStatusHistory::where('order_id', $order->id)->count())->toBe(0);
 
     // Valid chain: menunggu -> dibayar -> diproses -> selesai.
-    $machine->transition($order, 'dibayar', 'callback_simulasi', 'sistem', null);
+    $machine->transition($order, 'dibayar', 'callback_gateway', 'sistem', null);
     expect($order->fresh()->status)->toBe('dibayar');
     expect($order->fresh()->paid_at)->not->toBeNull();
     $machine->transition($order, 'diproses', 'admin', 'admin_toko', 1);
@@ -609,20 +535,20 @@ test('PAY-28 payment state machine accepts only pending transitions and final st
     expect(fn () => $machine->transition($payment, 'pending', 'checkout'))
         ->toThrow(ValidationException::class);
 
-    $machine->transition($payment, 'failed', 'callback_simulasi');
+    $machine->transition($payment, 'failed', 'callback_gateway');
     expect($payment->fresh()->status)->toBe('failed');
 
-    expect(fn () => $machine->transition($payment, 'paid', 'callback_simulasi'))
+    expect(fn () => $machine->transition($payment, 'paid', 'callback_gateway'))
         ->toThrow(ValidationException::class);
     expect(fn () => $machine->transition($payment, 'cancelled', 'pembeli_batal'))
         ->toThrow(ValidationException::class);
     expect($payment->fresh()->status)->toBe('failed');
-    expect(\App\Models\PaymentStatusTransition::where('payment_id', $payment->id)->count())->toBe(1);
+    expect(PaymentStatusTransition::where('payment_id', $payment->id)->count())->toBe(1);
 });
 
-// ---- Paid path (service only, no webhook in M3a) ----
+// ---- Paid path (service only) ----
 
-test('STK-03/EVT-05 markPaid confirms stock once, records one purchase event per item, and a second call changes nothing', function () {
+test('STK-03 markPaid confirms stock once and a second call changes nothing', function () {
     $buyer = m3Buyer();
     $product = m3Product(['stock_on_hand' => 10]);
     $order = m3Checkout($this, $buyer, [['product' => $product, 'qty' => 2]]);
@@ -641,16 +567,11 @@ test('STK-03/EVT-05 markPaid confirms stock once, records one purchase event per
         'product_id' => $product->id, 'type' => 'konfirmasi',
         'delta_on_hand' => -2, 'delta_reserved' => -2, 'order_id' => $order->id,
     ]);
-    $this->assertDatabaseHas('events', [
-        'event_type' => 'purchase', 'order_item_id' => $order->items()->first()->id,
-    ]);
-    expect(Event::where('event_type', 'purchase')->count())->toBe(1);
 
-    // Second paid call: rejected, no double stock or event effect.
+    // Second paid call: rejected, no double stock effect.
     expect(fn () => app(PaymentStateMachine::class)->markPaid($payment->fresh()))
         ->toThrow(ValidationException::class);
     expect($product->fresh()->stock_on_hand)->toBe(8);
-    expect(Event::where('event_type', 'purchase')->count())->toBe(1);
     expect(StockMovement::where('type', 'konfirmasi')->count())->toBe(1);
 });
 
@@ -748,7 +669,7 @@ test('ORD-12 admin cannot mark an order paid, cancel a paid order, or touch a wa
     expect($paid->fresh()->status)->toBe('dibayar');
 });
 
-test('ORD-10/11/13 admin order list filters by status, date range, origin and order number, and detail is read-only', function () {
+test('ORD-10/11/13 admin order list filters by status, date range and order number, and detail is read-only', function () {
     $buyer = m3Buyer();
     $admin = m3Admin();
     $cancelled = m3Checkout($this, $buyer, [['product' => m3Product(['name' => 'Produk Batal']), 'qty' => 1]]);
@@ -781,51 +702,6 @@ test('ORD-10/11/13 admin order list filters by status, date range, origin and or
         ->assertSee('Tandai Siap Diambil');
 });
 
-// ---- EVT-02 view ----
-
-test('EVT-02 opening a product detail records one view, deduped for 30 minutes, then recorded again', function () {
-    $buyer = m3Buyer();
-    $product = m3Product(['name' => 'Pulpen Dilihat']);
-
-    $this->actingAs($buyer, 'web');
-    $this->get('/produk/'.$product->id)->assertOk();
-    $this->get('/produk/'.$product->id)->assertOk();
-    expect(Event::where('event_type', 'view')->count())->toBe(1);
-
-    Carbon::setTestNow(now()->addMinutes(31));
-
-    try {
-        $this->get('/produk/'.$product->id)->assertOk();
-        expect(Event::where('event_type', 'view')->count())->toBe(2);
-    } finally {
-        Carbon::setTestNow();
-    }
-});
-
-test('EVT-02 no view is recorded from the listing, search, an inactive product, or an admin', function () {
-    $buyer = m3Buyer();
-    $admin = m3Admin();
-    $product = m3Product(['name' => 'Pulpen Tanpa View']);
-    $inactive = m3Product(['name' => 'Pulpen Mati View', 'is_active' => false]);
-
-    $this->actingAs($buyer, 'web');
-    $this->get('/katalog')->assertOk();
-    $this->get('/katalog?q=pulpen')->assertOk();
-    $this->get('/produk/'.$inactive->id)->assertNotFound();
-    expect(Event::where('event_type', 'view')->count())->toBe(0);
-
-    $this->actingAs($admin, 'web');
-    // UI polish Tahap 2: the catalog is public, so an admin may open the
-    // product page (200) — but only an active buyer's visit records a view.
-    $this->get('/produk/'.$product->id)->assertOk();
-    expect(Event::where('event_type', 'view')->count())->toBe(0);
-
-    // The buyer viewing the active product records exactly one.
-    $this->actingAs($buyer, 'web');
-    $this->get('/produk/'.$product->id)->assertOk();
-    expect(Event::where('event_type', 'view')->count())->toBe(1);
-});
-
 // ---- Guards ----
 
 test('M3a guards: guests are redirected, wrong-role users get 403, other buyers orders are 404', function () {
@@ -834,9 +710,6 @@ test('M3a guards: guests are redirected, wrong-role users get 403, other buyers 
     $admin = m3Admin();
     $order = m3Checkout($this, $buyer, [['product' => m3Product(), 'qty' => 1]]);
 
-    // m3Checkout() di atas login sebagai pembeli; tanpa logout, GET di
-    // bawah ini masih berstatus login dan mengembalikan 200, bukan redirect.
-    // Kelas kebocoran sesi yang sama seperti ACC-10 (M1) dan guards M2.
     $this->post('/keluar');
 
     $this->get('/keranjang')->assertRedirect('/masuk');
@@ -854,26 +727,12 @@ test('M3a guards: guests are redirected, wrong-role users get 403, other buyers 
     $this->get('/admin/pesanan')->assertForbidden();
     $this->get('/admin/pesanan/'.$order->id)->assertForbidden();
 
-    // Another buyer's order id behaves like a missing order (ACC-09).
     $this->actingAs($other, 'web');
     $this->get('/pesanan/'.$order->id)->assertNotFound();
 });
 
-test('M3a guards: a developer session cannot open buyer or admin order routes', function () {
-    // Separate test from the web-guard matrix above: actingAs() adds
-    // the developer session WITHOUT logging out the web session, so a
-    // developer check mixed into the same test would still pass as
-    // the web user. Each Pest test gets a fresh app/session.
-    $developer = \App\Models\Developer::factory()->create();
-    $this->actingAs($developer, 'developer');
-    $this->get('/keranjang')->assertRedirect('/masuk');
-    $this->get('/checkout')->assertRedirect('/masuk');
-    $this->get('/pesanan')->assertRedirect('/masuk');
-    $this->get('/admin/pesanan')->assertRedirect('/masuk?aktor=admin_toko');
-});
-
 test('M3a guards: every new protected route declares guard and role', function () {
-    $routes = \Illuminate\Support\Facades\Route::getRoutes();
+    $routes = Route::getRoutes();
 
     foreach ([
         '/keranjang' => 'role:pembeli',

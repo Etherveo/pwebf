@@ -8,12 +8,9 @@ use App\Models\StockMovement;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
-// M2 catalog seed data. M4 SIM-42 expanded it to 6 categories /
-// 40 active products (min 5 per category).
-// DATA CONTOH FIKTIF — bukan data penjualan Ira Stationery yang asli,
-// bukan data toko yang sebenarnya. Nama, harga, dan stok di bawah hanya
-// contoh untuk demo/pengujian, dan harus diganti admin lewat halaman
-// Produk sebelum dipakai untuk laporan apa pun.
+// Data katalog contoh awal untuk toko {{ config('store.name') }}.
+// Nama, harga, dan stok di bawah hanya data contoh awal; admin dapat
+// mengubah atau menggantinya langsung dari panel Produk.
 class CatalogSeeder extends Seeder
 {
     public function run(): void
@@ -107,9 +104,7 @@ class CatalogSeeder extends Seeder
                         'order_id' => null,
                         'actor_type' => 'admin_toko',
                         'actor_id' => null,
-                        'note' => 'Stok awal seeder (data contoh fiktif): 0 → '.$stock.'.',
-                        'origin' => 'normal',
-                        'simulation_run_id' => null,
+                        'note' => 'Stok awal seeder (data contoh): 0 → '.$stock.'.',
                         'created_at' => now(),
                     ]);
                 }

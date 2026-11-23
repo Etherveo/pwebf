@@ -18,7 +18,6 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id', 'product_id', 'product_name_snapshot',
         'unit_price_idr', 'quantity', 'subtotal_idr',
-        'origin', 'simulation_run_id',
     ];
 
     protected function casts(): array

@@ -1,22 +1,11 @@
 <?php
 
-// M3a/M3b PAY-01/PAY-02/PAY-55/PAY-57/PAY-60: the payment-method
-// catalog, defined ONCE here. Code, label, display
-// kind (QR or VA), VA bank code, active flag. Adding or disabling a
-// method only needs a config change, never a change to the checkout
-// flow. No real gateway, no provider branding (PAY-61): labels are
-// generic, icons in the UI are generic.
-//
-// 'driver' selects the payment adapter (only 'simulator' exists;
-// empty or unknown → the application fails to start, PAY-57).
-// 'webhook_secret' is the dummy HMAC key for simulator webhooks
-// (PAY-25/PAY-60): from the environment only, never a real value in
-// this file. 'poll_seconds' is the instruction page's status polling
-// interval (PAY-13).
+// Katalog metode pembayaran terpusat.
+// Driver adapter diatur melalui PAYMENT_DRIVER dan webhook melalui PAYMENT_WEBHOOK_SECRET.
 return [
-    'driver' => env('PAYMENT_DRIVER', 'simulator'),
+    'driver' => env('PAYMENT_DRIVER', 'manual'),
 
-    'webhook_secret' => env('SIMULATOR_WEBHOOK_SECRET', ''),
+    'webhook_secret' => env('PAYMENT_WEBHOOK_SECRET', ''),
 
     'poll_seconds' => 3,
 

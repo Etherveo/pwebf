@@ -20,7 +20,7 @@ class OrderStatusHistory extends Model
     protected $fillable = [
         'order_id', 'from_status', 'to_status', 'trigger',
         'actor_type', 'actor_id', 'reason', 'occurred_at',
-        'origin', 'simulation_run_id', 'created_at',
+        'created_at',
     ];
 
     protected function casts(): array

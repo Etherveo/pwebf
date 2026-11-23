@@ -20,8 +20,6 @@ class PaymentStatusTransitionFactory extends Factory
             'trigger' => 'checkout',
             'request_id' => null,
             'occurred_at' => now(),
-            'origin' => 'normal',
-            'simulation_run_id' => null,
             'created_at' => now(),
         ];
     }

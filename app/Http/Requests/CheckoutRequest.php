@@ -76,6 +76,6 @@ class CheckoutRequest extends FormRequest
 
     private function reportingTimezone(): string
     {
-        return (string) config('ira.reporting_timezone', 'Asia/Makassar');
+        return (string) config('store.reporting_timezone', 'Asia/Makassar');
     }
 }

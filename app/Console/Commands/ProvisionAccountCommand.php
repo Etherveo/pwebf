@@ -2,33 +2,27 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Developer;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 
-// ACC-05: admin_toko and developer accounts are provisioned via artisan
-// or seeder only — there is deliberately NO public registration for them.
-// Password comes from --password (env/script use) or an interactive secret
-// prompt; it is hashed immediately, never printed, never logged.
-// Re-running for an existing email does NOT overwrite without --force
-// plus an interactive confirmation.
+// Admin account provisioning CLI (there is deliberately no public admin registration).
 class ProvisionAccountCommand extends Command
 {
-    protected $signature = 'ira:provision-account
-        {role : admin_toko or developer}
+    protected $signature = 'store:provision-account
+        {role : admin_toko}
         {email : account email}
         {name : account name}
         {--password= : password (if omitted, prompted interactively)}
-        {--force : overwrite an existing account without confirmation}';
+        {--force : overwrite an existing admin account without confirmation}';
 
-    protected $description = 'Provision an admin_toko or developer account (ACC-05)';
+    protected $description = 'Provision an admin_toko account';
 
     public function handle(): int
     {
         $role = $this->argument('role');
-        if (! in_array($role, ['admin_toko', 'developer'], true)) {
-            $this->error('Role harus admin_toko atau developer.');
+        if ($role !== 'admin_toko') {
+            $this->error('Role yang didukung hanya admin_toko.');
 
             return self::FAILURE;
         }
@@ -42,13 +36,8 @@ class ProvisionAccountCommand extends Command
             return self::FAILURE;
         }
 
-        $existing = $role === 'developer'
-            ? Developer::query()->whereRaw('lower(email) = ?', [$email])->first()
-            : User::query()->whereRaw('lower(email) = ?', [$email])->first();
+        $existing = User::query()->whereRaw('lower(email) = ?', [$email])->first();
 
-        // Provisioning must never silently promote a buyer to admin: email
-        // uniqueness is per table, but within users the existing account
-        // must already be an admin_toko account to be overwritten.
         if ($existing instanceof User && $existing->role !== 'admin_toko') {
             $this->error('Email ini sudah dipakai akun pembeli. Provisioning tidak mengubah role pembeli menjadi admin.');
 
@@ -80,19 +69,11 @@ class ProvisionAccountCommand extends Command
 
         $hashed = Hash::make($password);
 
-        if ($role === 'developer') {
-            Developer::updateOrCreate(
-                ['email' => $email],
-                ['name' => $name, 'password' => $hashed, 'role' => 'dev'],
-            );
-        } else {
-            User::updateOrCreate(
-                ['email' => $email],
-                ['name' => $name, 'password' => $hashed, 'role' => 'admin_toko', 'origin' => 'normal', 'is_active' => true],
-            );
-        }
+        User::updateOrCreate(
+            ['email' => $email],
+            ['name' => $name, 'password' => $hashed, 'role' => 'admin_toko', 'is_active' => true],
+        );
 
-        // Deliberately do NOT print the password, its hash, or any secret.
         $this->info("Akun {$role} ({$email}) berhasil diprovisioning.");
 
         return self::SUCCESS;

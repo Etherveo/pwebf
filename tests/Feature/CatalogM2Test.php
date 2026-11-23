@@ -4,6 +4,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\User;
+use Illuminate\Support\Facades\Route;
 
 // M2 CAT-01..04, PRD-01..07, SHP-01..04, STK-01.
 // No Python, no Figma images, no external HTTP, no events table in M2.
@@ -354,20 +355,14 @@ test('SHP-03 search keyword shorter than 2 characters is rejected and empty resu
         ->assertSee('Tidak ada produk')->assertSee('Bersihkan pencarian');
 });
 
-test('SHP-03 search creates no view event, detail view records exactly one (EVT-02, M3a)', function () {
+test('SHP-03 search and product detail show only active products and return 404 for inactive', function () {
     $product = Product::factory()->create(['name' => 'Pulpen Cari']);
+    $inactive = Product::factory()->create(['name' => 'Pulpen Nonaktif', 'is_active' => false]);
 
     $this->actingAs(m2Buyer(), 'web');
-    $this->get('/katalog?q=pulpen')->assertOk();
-    $this->assertDatabaseCount('events', 0);
-
-    $this->get('/produk/'.$product->id)->assertOk();
-    $this->assertDatabaseHas('events', [
-        'event_type' => 'view',
-        'product_id' => $product->id,
-    ]);
-    $this->assertDatabaseCount('events', 1);
-    $this->assertDatabaseCount('products', 1);
+    $this->get('/katalog?q=pulpen')->assertOk()->assertSee('Pulpen Cari')->assertDontSee('Pulpen Nonaktif');
+    $this->get('/produk/'.$product->id)->assertOk()->assertSee('Pulpen Cari');
+    $this->get('/produk/'.$inactive->id)->assertNotFound();
 });
 
 test('SHP-03 search keyword is escaped in the UI (no raw HTML injection)', function () {
@@ -377,14 +372,12 @@ test('SHP-03 search keyword is escaped in the UI (no raw HTML injection)', funct
 
 // ---- Guards ----
 
-test('M2 guards: guests are redirected to login, wrong-role web users get 403, developer users are redirected', function () {
-    // UI polish Tahap 2: the catalog is public. Guests can read the listing
-    // and an active product detail (no view event, no crash); buying and the
-    // rest of the buyer surface still redirect to login.
+test('M2 guards: guests are redirected to login and wrong-role web users get 403', function () {
+    // Public catalog lets guests read the listing and active product detail;
+    // buying and admin surfaces require authenticated web sessions.
     $this->get('/katalog')->assertOk();
     $product = Product::factory()->create();
     $this->get('/produk/'.$product->id)->assertOk();
-    expect(\App\Models\Event::where('event_type', 'view')->count())->toBe(0);
     $this->get('/keranjang')->assertRedirect('/masuk');
     $this->post('/keranjang/tambah', ['product_id' => $product->id, 'quantity' => 1])->assertRedirect('/masuk');
     $this->get('/admin/kategori')->assertRedirect('/masuk?aktor=admin_toko');
@@ -405,20 +398,8 @@ test('M2 guards: admin can browse the public catalog but not the buyer-only rout
     $this->get('/keranjang')->assertForbidden();
 });
 
-test('M2 guards: developer cannot open admin catalog routes', function () {
-    // Skenario terpisah dari tes admin di atas: actingAs() menambah sesi
-    // guard developer TANPA mengeluarkan sesi guard web yang masih aktif,
-    // jadi bila digabung dalam satu tes, /admin/kategori akan lolos
-    // sebagai admin web (200), bukan redirect. Tiap tes Pest mendapat
-    // aplikasi/sesi baru, jadi skenario developer-only di sini bersih.
-    $developer = \App\Models\Developer::factory()->create();
-    $this->actingAs($developer, 'developer');
-    $this->get('/admin/kategori')->assertRedirect('/masuk?aktor=admin_toko');
-    $this->get('/admin/produk')->assertRedirect('/masuk?aktor=admin_toko');
-});
-
 test('M2 guards: every new protected route declares guard and role', function () {
-    $routes = \Illuminate\Support\Facades\Route::getRoutes();
+    $routes = Route::getRoutes();
 
     // UI polish Tahap 2: the three catalog routes are public ON PURPOSE —
     // assert that explicitly instead of silently dropping them.

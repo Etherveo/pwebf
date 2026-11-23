@@ -20,7 +20,7 @@ class Product extends Model
 
     protected $fillable = [
         'category_id', 'name', 'description', 'price_idr',
-        'stock_on_hand', 'stock_reserved', 'is_active', 'release_date',
+        'stock_on_hand', 'stock_reserved', 'is_active',
     ];
 
     protected function casts(): array
@@ -30,7 +30,6 @@ class Product extends Model
             'stock_on_hand' => 'integer',
             'stock_reserved' => 'integer',
             'is_active' => 'boolean',
-            'release_date' => 'date',
         ];
     }
 

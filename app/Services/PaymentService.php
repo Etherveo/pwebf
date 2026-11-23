@@ -89,7 +89,7 @@ class PaymentService
         $payment = Payment::create([
             'order_id' => $order->id,
             'user_id' => $order->user_id,
-            'provider' => 'simulator',
+            'provider' => (string) config('payment.driver', 'manual'),
             'provider_payment_id' => null,
             'payment_method' => $methodCode,
             'amount_idr' => $order->total_idr,
@@ -100,16 +100,10 @@ class PaymentService
             'qr_url' => null,
             'expires_at' => $order->payment_deadline_at,
             'paid_at' => null,
-            'is_simulated' => true,
-            'origin' => $order->origin,
-            'simulation_run_id' => $order->simulation_run_id,
         ]);
 
         $this->stateMachine->recordInitial($payment, 'checkout');
 
-        // M3b PAY-03/PAY-06: the instruction comes from the adapter
-        // (internal simulator gateway); qr_url is the simulator-page
-        // URL built from the payment token.
         $instruction = $this->adapter->createPayment($order, $methodCode, $payment);
 
         $payment->update(['qr_url' => $instruction->qr?->value]);
@@ -117,11 +111,6 @@ class PaymentService
         return $payment->fresh();
     }
 
-    // M3b: rebuild the instruction for an EXISTING payment (the
-    // instruction page), without creating anything. The values are the
-    // same ones the adapter returned at creation time; a missing
-    // qr_url (e.g. a payment created before M3b) falls back to the
-    // same URL formula.
     public function instructionFor(Payment $payment): PaymentInstruction
     {
         $method = $this->method($payment->payment_method);
@@ -130,14 +119,15 @@ class PaymentService
         return new PaymentInstruction(
             paymentId: $payment->id,
             referenceCode: $payment->reference_code,
-            qr: new QrPayload('url', (string) ($payment->qr_url ?? QrPayload::simPageUrl($payment->payment_token))),
+            qr: $payment->qr_url !== null && $payment->qr_url !== ''
+                ? new QrPayload('url', $payment->qr_url)
+                : null,
             vaNumber: $kind === 'va' ? $payment->reference_code : null,
             paymentToken: $payment->payment_token,
             expiresAt: $payment->expires_at->toImmutable(),
         );
     }
 
-    // PAY-05: >= 32 bytes of CSPRNG entropy, URL-safe, unique.
     private function uniqueToken(): string
     {
         do {
@@ -152,7 +142,7 @@ class PaymentService
         do {
             $reference = ($method['kind'] ?? 'qr') === 'va'
                 ? $this->vaReference((string) ($method['bank_code'] ?? '00'))
-                : 'SIMQR-'.$this->randomCode(10);
+                : 'PAY-'.$this->randomCode(10);
         } while (Payment::query()->where('reference_code', $reference)->exists());
 
         return $reference;

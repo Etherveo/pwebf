@@ -44,28 +44,28 @@
                 </div>
                 <div class="admin-kv-item">
                     <span class="admin-kv-label">Dibuat</span>
-                    <span class="admin-kv-value">{{ $order->created_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
+                    <span class="admin-kv-value">{{ $order->created_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
                 </div>
                 <div class="admin-kv-item">
                     <span class="admin-kv-label">Batas waktu bayar</span>
-                    <span class="admin-kv-value">{{ $order->payment_deadline_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
+                    <span class="admin-kv-value">{{ $order->payment_deadline_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
                 </div>
                 @if ($order->paid_at)
                     <div class="admin-kv-item">
                         <span class="admin-kv-label">Dibayar</span>
-                        <span class="admin-kv-value">{{ $order->paid_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
+                        <span class="admin-kv-value">{{ $order->paid_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
                     </div>
                 @endif
                 @if ($order->pickup_at)
                     <div class="admin-kv-item">
                         <span class="admin-kv-label">Jadwal pengambilan</span>
-                        <span class="admin-kv-value">{{ $order->pickup_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
+                        <span class="admin-kv-value">{{ $order->pickup_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
                     </div>
                 @endif
                 @if ($order->picked_up_at)
                     <div class="admin-kv-item">
                         <span class="admin-kv-label">Diambil</span>
-                        <span class="admin-kv-value">{{ $order->picked_up_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
+                        <span class="admin-kv-value">{{ $order->picked_up_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
                     </div>
                 @endif
             </div>
@@ -121,7 +121,7 @@
                                 @if ($payment->transitions->isNotEmpty())
                                     <ul class="admin-timeline">
                                     @foreach ($payment->transitions->sortBy('occurred_at') as $transition)
-                                        <li>{{ $transition->from_status ?? '—' }} → {{ $transition->to_status }} ({{ $transition->trigger }}) — {{ $transition->occurred_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA</li>
+                                        <li>{{ $transition->from_status ?? '—' }} → {{ $transition->to_status }} ({{ $transition->trigger }}) — {{ $transition->occurred_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</li>
                                     @endforeach
                                     </ul>
                                 @endif
@@ -138,7 +138,7 @@
                 @else
                     <ul class="admin-timeline">
                     @foreach ($order->histories->sortByDesc('occurred_at') as $history)
-                        <li>{{ $history->from_status ?? '—' }} → {{ $history->to_status }} (pemicu: {{ $history->trigger }}@if ($history->actor_type), pelaku: {{ $history->actor_type }} #{{ $history->actor_id }}@endif) — {{ $history->occurred_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }} WITA @if ($history->reason) — alasan: {{ $history->reason }} @endif</li>
+                        <li>{{ $history->from_status ?? '—' }} → {{ $history->to_status }} (pemicu: {{ $history->trigger }}@if ($history->actor_type), pelaku: {{ $history->actor_type }} #{{ $history->actor_id }}@endif) — {{ $history->occurred_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA @if ($history->reason) — alasan: {{ $history->reason }} @endif</li>
                     @endforeach
                     </ul>
                 @endif

@@ -3,15 +3,11 @@
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\PaymentStateMachine;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 
-// Jadwal pengambilan (keputusan Ren 2026-11-09): checkout wajib membawa
-// tanggal+jam pengambilan (WITA); disimpan UTC di orders.pickup_at;
-// tampil sebagai instruksi ke pembeli dan baris di detail admin.
-// Pesanan tanpa jadwal (NULL — pesanan lama/simulator) tidak menampilkan
-// apa pun. Tidak ada Python, tidak ada HTTP eksternal.
-// Helper lokal mengikuti pola m3c* di PaymentM3cTest.
+// Jadwal pengambilan (WITA input, UTC stored di orders.pickup_at).
 
 function psBuyer(): User
 {
@@ -63,7 +59,7 @@ function psPaidOrder($t, User $buyer, ?array $pickup = null): Order
 {
     $order = psCheckout($t, $buyer, [['product' => psProduct(), 'qty' => 1]], 'qris', null, $pickup);
     $payment = $order->payments()->first();
-    $t->post('/pay/sim/'.$payment->payment_token.'/bayar')->assertOk();
+    app(PaymentStateMachine::class)->markPaid($payment);
 
     return $order->fresh();
 }

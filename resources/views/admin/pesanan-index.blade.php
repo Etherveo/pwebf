@@ -1,8 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- UI polish Tahap 4b (UI.md §6.6, §9.4). Semua filter GET (q, status,
-         asal, dari, sampai), lencana SIMULASI, pagination, dan teks asersi tetap sama. --}}
     @php
         $statusChips = [
             'menunggu_pembayaran' => 'status-chip-warning',
@@ -84,7 +82,7 @@
                                     </div>
                                 </td>
                                 <td data-label="Tanggal (WITA)">
-                                    <span class="admin-cell-nowrap">{{ $order->created_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }}</span>
+                                    <span class="admin-cell-nowrap">{{ $order->created_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }}</span>
                                 </td>
                                 <td data-label="Total">
                                     <span class="admin-cell-price">{{ $order->formattedTotal() }}</span>

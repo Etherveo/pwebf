@@ -54,7 +54,7 @@
                         @foreach ($movements as $movement)
                             <tr>
                                 <td data-label="Waktu (WITA)">
-                                    <span class="admin-cell-nowrap">{{ $movement->created_at?->setTimezone(config('ira.reporting_timezone'))->format('d M Y H:i') }}</span>
+                                    <span class="admin-cell-nowrap">{{ $movement->created_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }}</span>
                                 </td>
                                 <td data-label="Jenis">
                                     <span class="status-chip status-chip-info">{{ $movement->type }}</span>

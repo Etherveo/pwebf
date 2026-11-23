@@ -31,12 +31,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'role' => 'pembeli',
-            'origin' => 'normal',
             'is_active' => true,
-            'simulation_run_id' => null,
-            // M4 slice 1 (buyer profile, Data_Pembeli §1). Every factory
-            // user gets a profile; username is the name slugged plus a
-            // unique number (same pattern the simulator will use).
             'username' => function (array $attributes) {
                 return Str::slug($attributes['name'], '') . fake()->unique()->numberBetween(1, 9999);
             },
@@ -56,15 +51,6 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'is_active' => false,
             'deactivated_at' => now(),
-        ]);
-    }
-
-    public function simulation(?string $runId = null): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'origin' => 'developer_simulation',
-            'simulation_run_id' => $runId ?? 'run-test-1',
-            'email' => fake()->unique()->userName().'@'.config('ira.sim_account_email_domain'),
         ]);
     }
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 // payment-specific regression test, that such a dispatch does not leak
 // request/session/transaction state into the outer request.
 test('M0 spike B-01 internal sub-request through the kernel returns a response', function () {
-    $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
+    $kernel = app(Kernel::class);
     $response = $kernel->handle(Request::create('/', 'GET'));
     $kernel->terminate(Request::create('/', 'GET'), $response);
 
@@ -32,7 +33,6 @@ test('M0 spike B-02 bulk insert of 1000 rows in one transaction completes', func
             'email' => 'bulk'.$i.'@contoh.test',
             'password' => 'hash-placeholder',
             'role' => 'pembeli',
-            'origin' => 'normal',
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now(),

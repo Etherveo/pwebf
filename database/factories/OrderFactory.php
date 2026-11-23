@@ -15,15 +15,13 @@ class OrderFactory extends Factory
     public function definition(): array
     {
         return [
-            'order_number' => 'IRA-'.now()->format('ymd').'-'.strtoupper(Str::random(6)),
+            'order_number' => strtoupper((string) config('store.order_prefix', 'JBR')).'-'.now()->format('ymd').'-'.strtoupper(Str::random(6)),
             'user_id' => User::factory(),
             'status' => 'menunggu_pembayaran',
             'total_idr' => fake()->numberBetween(1000, 100000),
             'payment_deadline_at' => now()->addMinutes(30),
             'paid_at' => null,
             'checkout_key' => (string) Str::uuid(),
-            'origin' => 'normal',
-            'simulation_run_id' => null,
         ];
     }
 
