@@ -14,6 +14,7 @@ class OrderExpiryService
         private readonly OrderStateMachine $orders,
         private readonly PaymentStateMachine $payments,
         private readonly StockService $stock,
+        private readonly ActivityRecorder $activity,
     ) {}
 
     // Expire one order if it is overdue. Returns true when it expired.
@@ -91,6 +92,7 @@ class OrderExpiryService
             // the order still expires and the stock still releases.
             $this->orders->transition($order, 'kedaluwarsa', 'job_kedaluwarsa', 'sistem', null, 'expired');
             $this->stock->release($order, 'sistem', null);
+            $this->activity->recordCancel($order, 'expired');
         }
 
         return true;

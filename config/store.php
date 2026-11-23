@@ -21,6 +21,9 @@ return [
     // Label zona waktu pelaporan/tampilan.
     'timezone_label' => env('STORE_TIMEZONE_LABEL', 'WITA'),
 
+    // Jendela deduplikasi event tampilan produk (dalam menit per pembeli & produk).
+    'view_event_dedup_minutes' => (int) env('VIEW_EVENT_DEDUP_MINUTES', 30),
+
     // Copy utama UI yang netral dan terpusat.
     'tagline' => env('STORE_TAGLINE', 'Belanja rapi dan terarah dalam satu tempat.'),
     'hero_headline' => env('STORE_HERO_HEADLINE', 'Kebutuhan harian tersaji ringkas dan jelas.'),

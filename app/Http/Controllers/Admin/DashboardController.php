@@ -5,72 +5,56 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderExpiryService;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use App\Services\StoreMetricsService;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-// Ringkasan penjualan ringan berbasis query SQL langsung (pengganti servis Python analytics).
+// Ringkasan penjualan & kategori berbasis SQL native serta grafik Chart.js.
 class DashboardController extends Controller
 {
     public function __construct(
         private readonly OrderExpiryService $expiry,
+        private readonly StoreMetricsService $metrics,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $this->expiry->expireOverdue();
 
-        $tz = (string) config('store.reporting_timezone', 'Asia/Makassar');
-        $endWita = Carbon::now($tz)->endOfDay();
-        $startWita = $endWita->copy()->subDays(29)->startOfDay();
-        $startUtc = $startWita->copy()->setTimezone('UTC');
-        $endUtc = $endWita->copy()->setTimezone('UTC');
+        $period = $this->metrics->resolvePeriod($request, '30d');
+        $grafik = in_array($request->query('grafik'), ['omzet', 'unit', 'pesanan'], true)
+            ? (string) $request->query('grafik')
+            : 'omzet';
 
-        $paidOrdersQuery = Order::query()
-            ->whereNotNull('paid_at')
-            ->whereBetween('paid_at', [$startUtc, $endUtc]);
-
-        $revenue30d = (int) (clone $paidOrdersQuery)->sum('total_idr');
-        $paidOrders30d = (int) (clone $paidOrdersQuery)->count();
-
-        $unitsSold30d = (int) DB::table('order_items')
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->whereNotNull('orders.paid_at')
-            ->whereBetween('orders.paid_at', [$startUtc, $endUtc])
-            ->sum('order_items.quantity');
-
-        $pendingOrders = (int) Order::query()->where('status', 'menunggu_pembayaran')->count();
-        $actionableOrders = (int) Order::query()->whereIn('status', ['dibayar', 'diproses'])->count();
-
-        $topProducts = DB::table('order_items')
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->join('products', 'products.id', '=', 'order_items.product_id')
-            ->whereNotNull('orders.paid_at')
-            ->whereBetween('orders.paid_at', [$startUtc, $endUtc])
-            ->groupBy('products.id', 'products.name')
-            ->select('products.id', 'products.name')
-            ->selectRaw('SUM(order_items.quantity) as units_sold, SUM(order_items.subtotal_idr) as revenue_idr')
-            ->orderByDesc('units_sold')
-            ->orderByDesc('revenue_idr')
-            ->limit(5)
-            ->get();
+        $summary = $this->metrics->dashboardSalesSummary($period, $grafik);
 
         $recentOrders = Order::query()
-            ->with('user')
+            ->with('user:id,name')
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->limit(5)
-            ->get();
+            ->paginate(5)
+            ->withQueryString();
+
+        $filterParams = array_filter([
+            'rentang' => $period['preset'] !== 'custom' ? $period['preset'] : null,
+            'dari' => $period['preset'] === 'custom' ? $period['dari'] : null,
+            'sampai' => $period['preset'] === 'custom' ? $period['sampai'] : null,
+            'grafik' => $grafik !== 'omzet' ? $grafik : null,
+        ], static fn ($v) => $v !== null && $v !== '');
 
         return view('admin.dashboard', [
-            'startWita' => $startWita,
-            'endWita' => $endWita,
-            'revenue30d' => $revenue30d,
-            'paidOrders30d' => $paidOrders30d,
-            'unitsSold30d' => $unitsSold30d,
-            'pendingOrders' => $pendingOrders,
-            'actionableOrders' => $actionableOrders,
-            'topProducts' => $topProducts,
+            'period' => $period,
+            'grafik' => $grafik,
+            'filterParams' => $filterParams,
+            'metrics' => $this->metrics,
+            'revenue' => $summary['revenue'],
+            'paidOrders' => $summary['paidOrders'],
+            'unitsSold' => $summary['unitsSold'],
+            'pendingOrders' => $summary['pendingOrders'],
+            'actionableOrders' => $summary['actionableOrders'],
+            'topProducts' => $summary['topProducts'],
+            'categories' => $summary['categories'],
+            'salesChart' => $summary['salesChart'],
             'recentOrders' => $recentOrders,
         ]);
     }

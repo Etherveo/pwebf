@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Shop;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\User;
+use App\Services\ActivityRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,6 +14,7 @@ use Illuminate\View\View;
 // Public catalog & search (only active products visible).
 class CatalogController extends Controller
 {
+    public function __construct(private readonly ActivityRecorder $activity) {}
     public function index(Request $request): View|RedirectResponse
     {
         // SHP-03: keyword 2-100 characters. Too short / too long is a
@@ -53,6 +56,12 @@ class CatalogController extends Controller
             ->with('category')
             ->where('is_active', true)
             ->findOrFail($produk);
+
+        $user = $request->user('web');
+        if ($user instanceof User) {
+            $sessionRef = $request->hasSession() ? $request->session()->getId() : null;
+            $this->activity->recordView($user, $product, $sessionRef);
+        }
 
         return view('shop.produk-detail', ['product' => $product]);
     }

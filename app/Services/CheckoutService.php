@@ -37,6 +37,7 @@ class CheckoutService
         private readonly OrderStateMachine $orders,
         private readonly PaymentStateMachine $payments,
         private readonly PaymentService $paymentService,
+        private readonly ActivityRecorder $activity,
     ) {}
 
     // ORD-01: the checkout summary data (cart items, server total,
@@ -147,6 +148,7 @@ class CheckoutService
             $this->stock->reserve($order, 'pembeli', $user->id);
 
             $this->orders->recordInitial($order, 'pembeli', 'pembeli', $user->id);
+            $this->activity->recordBooking($order);
 
             $this->cart->clear($user);
 
@@ -185,6 +187,7 @@ class CheckoutService
             } else {
                 $this->orders->transition($order, 'dibatalkan', 'pembeli', 'pembeli', $user->id, 'buyer');
                 $this->stock->release($order, 'pembeli', $user->id);
+                $this->activity->recordCancel($order, 'buyer');
             }
 
             return $order->fresh();

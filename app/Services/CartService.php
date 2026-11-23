@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 // only ever touched through its owner's cart.
 class CartService
 {
+    public function __construct(private readonly ActivityRecorder $activity) {}
+
     public function cartFor(User $user): Cart
     {
         return Cart::query()->firstOrCreate(['user_id' => $user->id]);
@@ -43,7 +45,7 @@ class CartService
     // CRT-01: add (merging when the product is already in the cart).
     // Failures (inactive product, quantity out of range, merged total
     // above 99 or above available stock) throw and write NO event.
-    public function add(User $user, Product $product, int $quantity): CartItem
+    public function add(User $user, Product $product, int $quantity, ?string $sessionRef = null): CartItem
     {
         $product = $product->fresh();
 
@@ -59,7 +61,7 @@ class CartService
             ]);
         }
 
-        return DB::transaction(function () use ($user, $product, $quantity) {
+        return DB::transaction(function () use ($user, $product, $quantity, $sessionRef) {
             $cart = $this->cartFor($user);
             $existing = $cart->items()->where('product_id', $product->id)->first();
             $merged = $quantity + (int) ($existing?->quantity ?? 0);
@@ -85,6 +87,8 @@ class CartService
                     'quantity' => $quantity,
                 ]);
             }
+
+            $this->activity->recordAddToCart($user, $product, $sessionRef);
 
             return $item;
         });

@@ -57,6 +57,14 @@
                     <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
                     <span>Dashboard</span>
                 </a>
+                <a href="{{ route('admin.funnel') }}" @class(['admin-nav-item', 'is-active' => request()->routeIs('admin.funnel')]) @if (request()->routeIs('admin.funnel')) aria-current="page" @endif>
+                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    <span>Funnel Pembelian</span>
+                </a>
+                <a href="{{ route('admin.aktivitas') }}" @class(['admin-nav-item', 'is-active' => request()->routeIs('admin.aktivitas*')]) @if (request()->routeIs('admin.aktivitas*')) aria-current="page" @endif>
+                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                    <span>Aktivitas Produk</span>
+                </a>
             </div>
 
             <div class="admin-nav-group">

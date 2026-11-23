@@ -46,6 +46,7 @@ class PaymentStateMachine
     public function __construct(
         private readonly OrderStateMachine $orders,
         private readonly StockService $stock,
+        private readonly ActivityRecorder $activity,
     ) {}
 
     // Single status change with its transition row. Caller owns the
@@ -113,6 +114,7 @@ class PaymentStateMachine
             $this->transition($payment, 'paid', $trigger, $requestId);
             $this->orders->transition($order, 'dibayar', $trigger, 'sistem', null);
             $this->stock->confirm($order, 'sistem', null);
+            $this->activity->recordPurchase($order->fresh(['items']));
 
             return $payment->fresh();
         });
@@ -161,6 +163,7 @@ class PaymentStateMachine
             $this->transition($payment, 'expired', $trigger, $requestId);
             $this->orders->transition($order, 'kedaluwarsa', $trigger, 'sistem', null, 'expired');
             $this->stock->release($order, 'sistem', null);
+            $this->activity->recordCancel($order, 'expired');
 
             return $payment->fresh();
         });
@@ -190,6 +193,7 @@ class PaymentStateMachine
             $this->transition($payment, 'cancelled', $trigger, $requestId);
             $this->orders->transition($order, 'dibatalkan', 'pembeli', 'pembeli', $actor?->id, 'buyer');
             $this->stock->release($order, 'pembeli', $actor?->id);
+            $this->activity->recordCancel($order, 'buyer');
 
             return $payment->fresh();
         });

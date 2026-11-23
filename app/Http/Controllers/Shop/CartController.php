@@ -32,6 +32,7 @@ class CartController extends Controller
             Auth::guard('web')->user(),
             $product,
             (int) $request->validated('quantity'),
+            $request->hasSession() ? $request->session()->getId() : null,
         );
 
         return redirect()->route('keranjang.index')

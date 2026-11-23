@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\StoreInsightsController;
 use App\Http\Controllers\Auth\BuyerAuthController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CatalogController;
@@ -70,6 +71,9 @@ Route::middleware(['auth:web', 'active', 'role:pembeli', 'no-cache'])->group(fun
 // Admin Toko surface
 Route::middleware(['auth:web', 'active', 'role:admin_toko', 'no-cache'])->group(function () {
     Route::get('/admin', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/admin/funnel', [StoreInsightsController::class, 'funnel'])->name('admin.funnel');
+    Route::get('/admin/aktivitas', [StoreInsightsController::class, 'activity'])->name('admin.aktivitas');
+    Route::get('/admin/aktivitas/riwayat', [StoreInsightsController::class, 'history'])->name('admin.aktivitas.riwayat');
 
     Route::get('/admin/kategori', [CategoryController::class, 'index'])->name('admin.kategori.index');
     Route::get('/admin/kategori/tambah', [CategoryController::class, 'create'])->name('admin.kategori.create');
