@@ -238,18 +238,18 @@ The final report states the outcome, the affected files, the verification perfor
 
 ---
 
-## C. Keputusan & Arah Proyek Baru (Transformasi E-Commerce `Jubarol`)
+## C. Keputusan & Arah Proyek Baru (Transformasi E-Commerce `Cloraamine`)
 
-> **Status fase saat ini:** Transformasi UI Minimalist Slate, rebrand terpusat `"Jubarol"` (`config/store.php`), penghapusan role `developer`, subsistem simulasi & servis Python, kontrak `PaymentAdapter` netral (`manual`), dan skema migrasi greenfield SQLite portabel telah selesai diterapkan pada codebase aktif.
+> **Status fase saat ini:** Transformasi UI Minimalist Slate, rebrand terpusat `"Cloraamine"` (`config/store.php`), penghapusan role `developer`, subsistem simulasi & servis Python, kontrak `PaymentAdapter` netral (`manual`) dengan unggah bukti bayar privat & konfirmasi admin, katalog merchandise & cetak custom (atribut kondisi baru/bekas, pre-order, unggulan, foto produk), pemenuhan pesanan fleksibel (ekspedisi & ambil di toko), serta skema migrasi greenfield SQLite portabel telah selesai diterapkan pada codebase aktif.
 
 Keputusan yang mengikat arah pengembangan lanjut:
 
 - **UI: Minimalist Slate.** Desain datar berbatas tipis (`resources/css/tokens.css`, `resources/css/app.css`) merujuk `docs/ui-minimalist-spec.md`.
-- **Rebranding terpusat (`DEC-01`).** Seluruh nama merek, inisial, awalan nomor pesanan (`store.order_prefix`), zona waktu pelaporan WITA (`Asia/Makassar`), dan masa berlaku pembayaran dikelola lewat `config/store.php` / `.env` (sementara memakai nama `"Jubarol"`).
+- **Rebranding terpusat (`DEC-01`).** Seluruh nama merek (`Cloraamine`), inisial (`C`), awalan nomor pesanan (`store.order_prefix` = `CL`), kontak WhatsApp, sosial media (`@cloraamine`), daftar rekening, kurir ekspedisi, zona waktu pelaporan WITA (`Asia/Makassar`), dan masa berlaku pembayaran dikelola lewat `config/store.php` / `.env`.
 - **Dua aktor tanpa simulasi & tanpa Python.** Aplikasi hanya melayani **2 aktor** (`pembeli` dan `admin_toko` di guard `web`). Seluruh guard `developer`, mesin simulasi `app/Simulation/`, servis `python/`, serta rute simulator pembayaran telah dihapus. Ringkasan toko untuk `admin_toko` dihitung 100% native lewat SQL Laravel (`Admin\DashboardController`, `Admin\StoreInsightsController`, `StoreMetricsService`, tabel `events`) dengan grafik **Chart.js** pada **Dashboard** (`/admin`) ditambah 2 halaman wawasan (**Funnel Pembelian** `/admin/funnel` dan **Aktivitas Produk** `/admin/aktivitas` beserta tab **Riwayat Aktivitas** `/admin/aktivitas/riwayat`), dilengkapi filter tombol rinci dan pagination.
-- **Arsitektur Payment Gateway siap integrasi (`DEC-04`).** Checkout & pesanan bergantung mutlak pada interface `App\Payments\PaymentAdapter` (`ManualPaymentAdapter` sebagai implementasi netral sementara) dan endpoint `POST /api/v1/webhooks/payments/{provider}` bertanda tangan HMAC. Integrasi gateway riil (Midtrans / Xendit / Tripay / Duitku) ditambahkan kelak sebagai adapter baru di `ProviderRegistry`.
-- **Database greenfield bersih (`DEC-05`).** Seluruh skema menggunakan migrasi Laravel `Schema::create(...)` portabel pada `database/database.sqlite` tanpa tabel/kolom simulasi atau developer.
-- **Pemenuhan pesanan (`DEC-03` — ditunda).** Model ambil di toko (`pickup_at`, `picked_up_at`, label `"Siap Diambil"`) tetap dipertahankan sampai keputusan pengiriman alamat dibahas lebih lanjut.
+- **Arsitektur Payment Gateway siap integrasi (`DEC-04`).** Checkout & pesanan bergantung mutlak pada interface `App\Payments\PaymentAdapter` (`ManualPaymentAdapter` dengan unggah bukti bayar privat & konfirmasi pembayaran oleh admin) dan endpoint `POST /api/v1/webhooks/payments/{provider}` bertanda tangan HMAC. Integrasi gateway riil (Midtrans / Xendit / Tripay / Duitku) ditambahkan kelak sebagai adapter baru di `ProviderRegistry`.
+- **Database greenfield bersih (`DEC-05`).** Seluruh skema menggunakan migrasi Laravel `Schema::create(...)` / `Schema::table(...)` portabel pada `database/database.sqlite` tanpa tabel/kolom simulasi atau developer.
+- **Pemenuhan pesanan (`DEC-03`).** Mendukung 2 metode pemenuhan saat checkout: **Ambil di Toko** (`pickup_at`, `picked_up_at`, label `"Siap Diambil"`) dan **Pengiriman Ekspedisi** (`fulfillment_method = 'delivery'`, kurir `JNE`/`J&T`/`SiCepat`, ongkir, alamat tersimpan/snapshot alamat, dan nomor resi `tracking_number`).
 - **Zona waktu, mata uang & lokal:** Antarmuka berbahasa Indonesia, mata uang Rupiah (`Rp 1.250.000`), penyimpanan UTC dan pelaporan WITA (`Asia/Makassar`).
 - **Perintah CLI toko & Tes:** `php artisan store:check-config`, `php artisan store:expire-overdue-orders`, `php artisan store:provision-account`, serta suite tes Pest (`pestphp/pest ^5.3`).
 

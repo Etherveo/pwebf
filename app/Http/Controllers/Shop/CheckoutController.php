@@ -10,11 +10,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
-// M3a/M3b ORD-01/ORD-02. The summary page shows server-computed
-// items and total plus the payment-method choice (PAY-02); the POST
-// creates the order atomically in CheckoutService. After success the
-// buyer lands on the PAYMENT INSTRUCTION page (PAY-11), where the
-// QR/VA, countdown and sim link live.
+// M3a/M3b ORD-01/ORD-02. Summary page shows server-computed items,
+// fulfillment options (store pickup or courier delivery), and payment methods.
 class CheckoutController extends Controller
 {
     public function __construct(
@@ -41,6 +38,9 @@ class CheckoutController extends Controller
             'items' => $view['items'],
             'total_idr' => $view['total_idr'],
             'methods' => $this->payments->methods(),
+            'couriers' => config('store.couriers', []),
+            'addresses' => $user->addresses()->orderByDesc('id')->get(),
+            'user' => $user,
             'checkout_key' => $this->checkout->newCheckoutKey(),
             'expiry_minutes' => $this->checkout->expiryMinutes(),
         ]);
@@ -53,6 +53,7 @@ class CheckoutController extends Controller
             (string) $request->validated('payment_method'),
             $request->validated('checkout_key'),
             $request->pickupAt(),
+            $request->fulfillmentPayload(),
         );
 
         return redirect()->route('pesanan.bayar', $order)

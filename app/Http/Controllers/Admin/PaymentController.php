@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Services\OrderExpiryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
-// Read-only payment list and detail for Admin Toko.
+// Read-only payment list, detail, and proof image viewer for Admin Toko (PAY-53).
 class PaymentController extends Controller
 {
     public function __construct(
@@ -52,6 +54,17 @@ class PaymentController extends Controller
             'method' => config('payment.methods.'.$found->payment_method, []),
             'transitions' => $found->transitions->sortBy('occurred_at')->values(),
         ]);
+    }
+
+    public function viewProof(string $payment): StreamedResponse
+    {
+        $found = Payment::query()->findOrFail($payment);
+
+        if (! $found->hasProof() || ! Storage::disk('local')->exists($found->proof_path)) {
+            abort(404);
+        }
+
+        return Storage::disk('local')->response($found->proof_path);
     }
 
     private function isDate(mixed $value): bool

@@ -68,10 +68,14 @@
                         @endif
                     </dl>
 
-                    {{-- Instruksi pengambilan: tidak tampil bila pesanan
-                         dibatalkan/kedaluwarsa (tidak ada yang diambil). --}}
-                    @if ($order->pickup_at && ! in_array($order->status, ['dibatalkan', 'kedaluwarsa'], true))
+                     {{-- Instruksi pengambilan / pengiriman: tidak tampil bila pesanan
+                          dibatalkan/kedaluwarsa (tidak ada yang diambil/dikirim). --}}
+                    @if (($order->pickup_at || $order->isDelivery()) && ! in_array($order->status, ['dibatalkan', 'kedaluwarsa'], true))
                         @include('payments._pickup-instruction', ['order' => $order])
+                    @endif
+
+                    @if ($order->buyer_note)
+                        <p class="admin-info-box"><strong>Catatan Pesanan:</strong> {{ $order->buyer_note }}</p>
                     @endif
 
                     <h3 class="admin-kv-group-title">Item</h3>
@@ -98,6 +102,9 @@
                         </table>
                     </div>
 
+                    @if ($order->shipping_cost_idr > 0)
+                        <p class="admin-order-total">Subtotal Barang: {{ $order->formattedSubtotal() }} &bull; Ongkos Kirim ({{ $order->courier_name }}): {{ $order->formattedShippingCost() }}</p>
+                    @endif
                     <p class="admin-order-total"><strong>Total: {{ $order->formattedTotal() }}</strong></p>
                 </div>
 
@@ -135,6 +142,9 @@
                                     </dl>
                                     <p class="buyer-payment-foot">
                                         <a class="admin-action-link" href="{{ route('pembayaran.show', $payment) }}">Lihat detail pembayaran</a>
+                                        @if ($payment->hasProof())
+                                            &bull; <a class="admin-action-link" href="{{ route('pembayaran.bukti.show', $payment) }}" target="_blank" rel="noopener">Lihat bukti bayar</a>
+                                        @endif
                                     </p>
                                 </div>
                             @endforeach

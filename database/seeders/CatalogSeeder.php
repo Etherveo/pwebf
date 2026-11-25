@@ -8,67 +8,202 @@ use App\Models\StockMovement;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
-// Data katalog contoh awal untuk toko {{ config('store.name') }}.
-// Nama, harga, dan stok di bawah hanya data contoh awal; admin dapat
-// mengubah atau menggantinya langsung dari panel Produk.
+// Data katalog awal Cloraamine (Photocard, Album, Merchandise, Stiker Custom, Pin Button Custom).
 class CatalogSeeder extends Seeder
 {
     public function run(): void
     {
         $data = [
-            'Pulpen & Pensil' => [
-                ['Pulpen Gel Hitam 0,5 mm', 5000, 120],
-                ['Pulpen Gel Biru 0,5 mm', 5000, 85],
-                ['Pensil 2B', 3000, 200],
-                ['Pensil Mekanik 0,5 mm', 15000, 40],
-                ['Spidol Whiteboard Hitam', 12000, 60],
-                ['Pulpen Gel Merah 0,5 mm', 5000, 70],
-                ['Spidol Whiteboard Biru', 12000, 55],
-                ['Spidol Permanen Hitam', 15000, 40],
-                ['Pensil Mekanik 0,7 mm', 18000, 35],
+            'Photocard' => [
+                [
+                    'name' => 'Photocard Set Era Pertama (Isi 5 Kartu)',
+                    'price_idr' => 25000,
+                    'stock' => 20,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => true,
+                    'description' => 'Set photocard koleksi edisi era pertama berisi 5 kartu cetak tebal berlaminasi.',
+                ],
+                [
+                    'name' => 'Photocard Solo Edisi Latar Khusus',
+                    'price_idr' => 15000,
+                    'stock' => 12,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => false,
+                    'description' => 'Photocard solo satu lembar dengan hasil cetak tajam dan sleeve pelindung.',
+                ],
+                [
+                    'name' => 'Photocard Unit Edisi Kedua (Pre-Order)',
+                    'price_idr' => 30000,
+                    'stock' => 25,
+                    'condition' => 'baru',
+                    'is_preorder' => true,
+                    'preorder_eta' => 'Estimasi 30–45 hari sejak pemesanan',
+                    'is_featured' => true,
+                    'description' => 'Photocard unit edisi kedua melalui jalur pre-order resmi.',
+                ],
+                [
+                    'name' => 'Photocard Koleksi Bekas Kondisi Mulus',
+                    'price_idr' => 10000,
+                    'stock' => 4,
+                    'condition' => 'bekas',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => false,
+                    'description' => 'Photocard koleksi preloved kondisi terawat baik, tanpa lipatan dan disimpan dalam toploader.',
+                ],
             ],
-            'Kertas & Buku' => [
-                ['Buku Tulis 38 Lembar', 6000, 150],
-                ['Buku Gambar A4', 10000, 90],
-                ['Kertas HVS A4 1 Rim', 55000, 30],
-                ['Kertas Origami 1 Pak', 8000, 70],
-                ['Map Plastik Bening', 4000, 110],
-                ['Buku Tulis 58 Lembar', 8000, 120],
-                ['Buku Agenda A5', 25000, 45],
-                ['Kertas HVS F4 1 Rim', 60000, 25],
+            'Album' => [
+                [
+                    'name' => 'Album Fisik Edisi Reguler + Photobook',
+                    'price_idr' => 250000,
+                    'stock' => 10,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => true,
+                    'description' => 'Album fisik tersegel lengkap dengan photobook, CD, dan bonus photocard acak.',
+                ],
+                [
+                    'name' => 'Album Mini Edisi Kit Ringkas',
+                    'price_idr' => 180000,
+                    'stock' => 8,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => false,
+                    'description' => 'Album edisi kit dengan kotak kemasan ringkas dan set kartu lirik.',
+                ],
+                [
+                    'name' => 'Album Repackaged Special Edition (Pre-Order)',
+                    'price_idr' => 220000,
+                    'stock' => 15,
+                    'condition' => 'baru',
+                    'is_preorder' => true,
+                    'preorder_eta' => 'Estimasi 45 hari sejak ditutup',
+                    'is_featured' => true,
+                    'description' => 'Pemesanan awal album repackaged lengkap dengan poster lipat dan kartu edisi terbatas.',
+                ],
+                [
+                    'name' => 'Album Koleksi Preloved (Unsealed Lengkap)',
+                    'price_idr' => 125000,
+                    'stock' => 3,
+                    'condition' => 'bekas',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => false,
+                    'description' => 'Album koleksi preloved kondisi buku dan CD mulus lengkap dengan seluruh isi bawaan.',
+                ],
             ],
-            'Perlengkapan Kantor' => [
-                ['Stapler Kecil', 25000, 25],
-                ['Isi Stapler No. 10', 7000, 0], // contoh stok habis (PRD-06/SHP-01)
-                ['Gunting Kantor', 18000, 45],
-                ['Lem Stick', 9000, 80],
-                ['Selotip Bening', 6000, 100],
-                ['Pembolong Kertas', 35000, 20],
-                ['Binder Clip Set 12', 12000, 90],
-                ['Stapler Besar', 45000, 15],
+            'Merchandise' => [
+                [
+                    'name' => 'Lightstick Edisi Konser Resmi',
+                    'price_idr' => 450000,
+                    'stock' => 6,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => true,
+                    'description' => 'Lightstick resmi dengan kemasan pabrik, strap tangan, dan buku panduan.',
+                ],
+                [
+                    'name' => 'Totebag Kanvas Tebal Sablon Edisi Tur',
+                    'price_idr' => 85000,
+                    'stock' => 18,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => false,
+                    'description' => 'Totebag bahan kanvas tebal dengan ritsleting utama dan saku dalam.',
+                ],
+                [
+                    'name' => 'Poster Gulung A2 + Tabung Pelindung',
+                    'price_idr' => 40000,
+                    'stock' => 15,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => false,
+                    'description' => 'Poster cetak art paper tebal dikirim tergulung di dalam tabung pengaman.',
+                ],
+                [
+                    'name' => 'Binder Koleksi Photocard A5 + 20 Sleeve',
+                    'price_idr' => 65000,
+                    'stock' => 0,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => false,
+                    'description' => 'Binder penyimpanan koleksi kartu ukuran A5 lengkap dengan 20 lembar plastik 4-pocket.',
+                ],
             ],
-            'Seni & Kreativitas' => [
-                ['Pensil Warna 12 Warna', 35000, 35],
-                ['Crayon 24 Warna', 45000, 20],
-                ['Cat Air 12 Warna', 55000, 15],
-                ['Kuas Lukis Set 5', 30000, 25],
-                ['Cat Akrilik 6 Warna', 60000, 18],
+            'Stiker Custom' => [
+                [
+                    'name' => 'Paket Stiker Custom Vinyl Tahan Air (50 pcs)',
+                    'price_idr' => 45000,
+                    'stock' => 40,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => true,
+                    'description' => 'Cetak stiker bahan vinyl tahan air ukuran 5×5 cm isi 50 lembar, potong persegi atau bulat.',
+                ],
+                [
+                    'name' => 'Paket Stiker Custom Holografis Die-Cut (50 pcs)',
+                    'price_idr' => 65000,
+                    'stock' => 30,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => false,
+                    'description' => 'Cetak stiker efek pelangi holografis dengan potongan mengikuti pola desain (die-cut).',
+                ],
+                [
+                    'name' => 'Paket Stiker Custom Matte Grosir (100 pcs)',
+                    'price_idr' => 80000,
+                    'stock' => 25,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => false,
+                    'description' => 'Paket hemat 100 pcs stiker laminasi doff/matte halus untuk komunitas dan merchandise.',
+                ],
             ],
-            'Aksesoris Sekolah' => [
-                ['Penggaris 30 cm', 5000, 130],
-                ['Penghapus Putih', 2000, 160],
-                ['Rautan Pensil', 3000, 90],
-                ['Tas Pensil Kain', 20000, 50],
-                ['Tempat Pensil Plastik', 15000, 60],
-                // Produk contoh nonaktif: tidak tampil di katalog pembeli (SHP-04).
-                ['Kotak Pensil Kayu Edisi Lama', 40000, 10, false],
-            ],
-            'Tas & Ransel Sekolah' => [
-                ['Tas Ransel Sekolah Polos', 120000, 20],
-                ['Tas Selempang Anak', 75000, 30],
-                ['Tas Ransel Laptop 14 Inci', 185000, 12],
-                ['Tas Bekal Sekolah', 35000, 45],
-                ['Tas Ransel Mini Anak', 65000, 25],
+            'Pin Button Custom' => [
+                [
+                    'name' => 'Paket Pin Button Custom 4,4 cm Glossy (30 pcs)',
+                    'price_idr' => 105000,
+                    'stock' => 30,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => true,
+                    'description' => 'Paket 30 pin peniti bundar diameter 4,4 cm berlaminasi glossy mengilap.',
+                ],
+                [
+                    'name' => 'Paket Pin Button Custom 5,8 cm Matte (30 pcs)',
+                    'price_idr' => 120000,
+                    'stock' => 25,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => false,
+                    'description' => 'Paket 30 pin peniti bundar diameter 5,8 cm dengan permukaan matte elegan.',
+                ],
+                [
+                    'name' => 'Pin Button Edisi Arsip Lama (Nonaktif)',
+                    'price_idr' => 35000,
+                    'stock' => 5,
+                    'condition' => 'baru',
+                    'is_preorder' => false,
+                    'preorder_eta' => null,
+                    'is_featured' => false,
+                    'is_active' => false,
+                    'description' => 'Contoh produk arsip nonaktif yang tidak ditampilkan di katalog publik.',
+                ],
             ],
         ];
 
@@ -79,22 +214,23 @@ class CatalogSeeder extends Seeder
             );
 
             foreach ($products as $row) {
-                [$name, $price, $stock] = $row;
-                $active = $row[3] ?? true;
-
+                $stock = (int) $row['stock'];
                 $product = Product::firstOrCreate(
-                    ['name' => $name],
+                    ['name' => $row['name']],
                     [
                         'category_id' => $category->id,
-                        'description' => 'Produk contoh fiktif untuk demo katalog.',
-                        'price_idr' => $price,
+                        'description' => $row['description'],
+                        'price_idr' => (int) $row['price_idr'],
+                        'condition' => $row['condition'] ?? 'baru',
+                        'is_preorder' => (bool) ($row['is_preorder'] ?? false),
+                        'preorder_eta' => $row['preorder_eta'] ?? null,
+                        'is_featured' => (bool) ($row['is_featured'] ?? false),
                         'stock_on_hand' => $stock,
                         'stock_reserved' => 0,
-                        'is_active' => $active,
+                        'is_active' => $row['is_active'] ?? true,
                     ],
                 );
 
-                // Mirror PRD-01: initial stock > 0 gets one adjustment row.
                 if ($stock > 0 && ! StockMovement::where('product_id', $product->id)->exists()) {
                     StockMovement::create([
                         'product_id' => $product->id,
@@ -102,9 +238,9 @@ class CatalogSeeder extends Seeder
                         'delta_on_hand' => $stock,
                         'delta_reserved' => 0,
                         'order_id' => null,
-                        'actor_type' => 'admin_toko',
+                        'actor_type' => 'sistem',
                         'actor_id' => null,
-                        'note' => 'Stok awal seeder (data contoh): 0 → '.$stock.'.',
+                        'note' => 'Stok awal (seed contoh)',
                         'created_at' => now(),
                     ]);
                 }

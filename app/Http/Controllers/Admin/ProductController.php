@@ -56,7 +56,13 @@ class ProductController extends Controller
     public function store(ProductRequest $request): RedirectResponse
     {
         $actor = Auth::guard('web')->user();
-        $product = $this->catalog->createProduct($request->validated(), $actor);
+        $data = $request->validated();
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('product-photos', 'local');
+        }
+
+        $product = $this->catalog->createProduct($data, $actor);
 
         return redirect()->route('admin.produk.index')
             ->with('status', 'Produk “'.$product->name.'” ditambahkan.');
@@ -72,7 +78,13 @@ class ProductController extends Controller
 
     public function update(ProductRequest $request, int $produk): RedirectResponse
     {
-        $product = $this->catalog->updateProduct(Product::findOrFail($produk), $request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('product-photos', 'local');
+        }
+
+        $product = $this->catalog->updateProduct(Product::findOrFail($produk), $data);
 
         return redirect()->route('admin.produk.index')
             ->with('status', 'Produk “'.$product->name.'” diperbarui.');

@@ -256,7 +256,7 @@ test('ORD-02 checkout is atomic: order, snapshot items, reserved stock, empty ca
 
     expect($order->status)->toBe('menunggu_pembayaran');
     expect($order->total_idr)->toBe(12500);
-    expect($order->order_number)->toMatch('/^JBR-\d{6}-[A-HJ-NP-Z2-9]{6}$/');
+    expect($order->order_number)->toMatch('/^CL-\d{6}-[A-HJ-NP-Z2-9]{6}$/');
     expect((int) $order->created_at->diffInMinutes($order->payment_deadline_at))->toBe(30);
 
     $items = $order->items()->orderBy('product_id')->get();

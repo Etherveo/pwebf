@@ -18,6 +18,9 @@
                 <h1 class="admin-title">Pesanan</h1>
                 <p class="admin-subtitle">Daftar pesanan masuk dari pembeli, lengkap dengan filter status dan rentang tanggal.</p>
             </div>
+            <div class="admin-head-actions">
+                <a class="btn-secondary" href="{{ route('admin.pesanan.csv', request()->query()) }}">Ekspor CSV</a>
+            </div>
         </header>
 
         <div class="card admin-panel">

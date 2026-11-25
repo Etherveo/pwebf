@@ -36,14 +36,15 @@ class Payment extends Model
     protected $fillable = [
         'order_id', 'user_id', 'provider', 'provider_payment_id',
         'payment_method', 'amount_idr', 'currency', 'status',
-        'reference_code', 'payment_token', 'qr_url', 'expires_at',
-        'paid_at',
+        'reference_code', 'payment_token', 'qr_url', 'proof_path',
+        'proof_uploaded_at', 'expires_at', 'paid_at',
     ];
 
     protected function casts(): array
     {
         return [
             'amount_idr' => 'integer',
+            'proof_uploaded_at' => 'datetime',
             'expires_at' => 'datetime',
             'paid_at' => 'datetime',
         ];
@@ -89,5 +90,10 @@ class Payment extends Model
     public function isFinal(): bool
     {
         return $this->status !== 'pending';
+    }
+
+    public function hasProof(): bool
+    {
+        return is_string($this->proof_path) && trim($this->proof_path) !== '';
     }
 }

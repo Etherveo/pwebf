@@ -76,6 +76,15 @@
                             <tr>
                                 <td data-label="Nama">
                                     <span class="admin-cell-primary">{{ $product->name }}</span>
+                                    <div class="admin-cell-sub">
+                                        {{ $product->conditionLabel() }}
+                                        @if ($product->is_preorder)
+                                            &bull; Pre-Order
+                                        @endif
+                                        @if ($product->is_featured)
+                                            &bull; Unggulan
+                                        @endif
+                                    </div>
                                 </td>
                                 <td data-label="Kategori">{{ $product->category?->name }}</td>
                                 <td data-label="Harga">

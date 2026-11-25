@@ -1,9 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- UI polish Tahap 6 (UI.md §6, §9.2, §9.3, §16, referensi Figma 3:103851).
-         Form POST checkout.store dengan checkout_key tersembunyi, pelindung
-         kirim-ganda, dan keenam metode pembayaran simulasi dipertahankan. --}}
+    @php
+        $selectedFulfillment = old('fulfillment_method', 'pickup');
+        $couriers = $couriers ?? config('store.couriers', []);
+        $addresses = $addresses ?? collect();
+    @endphp
     <div class="admin-page">
         <nav class="admin-back-nav" aria-label="Breadcrumb">
             <a class="admin-back-link" href="{{ route('keranjang.index') }}">
@@ -16,7 +18,7 @@
             <div>
                 <p class="admin-eyebrow">{{ config('store.name') }} &bull; Checkout</p>
                 <h1 class="admin-title">Checkout</h1>
-                <p class="admin-subtitle">Periksa barang pesananmu, lalu pilih satu metode pembayaran.</p>
+                <p class="admin-subtitle">Periksa barang pesananmu, pilih metode pemenuhan (ambil di toko atau kirim ekspedisi), lalu pilih metode pembayaran.</p>
             </div>
         </header>
 
@@ -47,7 +49,12 @@
                                 <tbody>
                                 @foreach ($items as $item)
                                     <tr>
-                                        <td data-label="Produk" class="admin-cell-primary">{{ $item->product->name }}</td>
+                                        <td data-label="Produk" class="admin-cell-primary">
+                                            {{ $item->product->name }}
+                                            @if ($item->product->is_preorder)
+                                                <div class="admin-cell-sub">Pre-Order {{ $item->product->preorder_eta ? '• '.$item->product->preorder_eta : '' }}</div>
+                                            @endif
+                                        </td>
                                         <td data-label="Harga satuan" class="admin-cell-nowrap">{{ $item->product->formattedPrice() }}</td>
                                         <td data-label="Jumlah">{{ $item->quantity }}</td>
                                         <td data-label="Subtotal" class="admin-cell-price">{{ 'Rp '.number_format($item->subtotalIdr(), 0, ',', '.') }}</td>
@@ -59,22 +66,100 @@
                     </div>
 
                     <div class="card admin-panel">
-                        <h2 class="admin-section-title">Jadwal pengambilan</h2>
-                        <p class="admin-hint">Pesanan diambil di toko {{ config('store.name') }}. Pilih tanggal dan jam pengambilan sebelum memilih metode pembayaran.</p>
-                        <div class="admin-field-grid">
-                            <div class="admin-field">
-                                <label for="pickup_date" class="admin-label">Tanggal pengambilan</label>
-                                <input class="input" id="pickup_date" name="pickup_date" type="date" value="{{ old('pickup_date') }}" required
-                                       min="{{ \Carbon\Carbon::now(config('store.reporting_timezone'))->toDateString() }}"
-                                       @error('pickup_date') aria-invalid="true" aria-describedby="pickup_date-error" @enderror>
-                                @error('pickup_date')<p class="alert-error field-error" id="pickup_date-error">{{ $message }}</p>@enderror
+                        <fieldset class="buyer-method-fieldset">
+                            <legend class="admin-section-title">Metode pemenuhan pesanan</legend>
+                            <p class="admin-hint">Pilih ambil langsung di toko (Rp 0) atau pengiriman lewat kurir ekspedisi.</p>
+                            <div class="buyer-method-grid">
+                                <label class="buyer-method-card" for="fulfillment-pickup">
+                                    <input type="radio" id="fulfillment-pickup" name="fulfillment_method" value="pickup" @checked($selectedFulfillment !== 'delivery') onchange="document.getElementById('box-pickup').hidden = false; document.getElementById('box-delivery').hidden = true;">
+                                    <span class="buyer-method-body">
+                                        <span class="buyer-method-title">Ambil di Toko (Rp 0)</span>
+                                    </span>
+                                </label>
+                                <label class="buyer-method-card" for="fulfillment-delivery">
+                                    <input type="radio" id="fulfillment-delivery" name="fulfillment_method" value="delivery" @checked($selectedFulfillment === 'delivery') onchange="document.getElementById('box-pickup').hidden = true; document.getElementById('box-delivery').hidden = false;">
+                                    <span class="buyer-method-body">
+                                        <span class="buyer-method-title">Kirim via Ekspedisi</span>
+                                    </span>
+                                </label>
                             </div>
-                            <div class="admin-field">
-                                <label for="pickup_time" class="admin-label">Jam pengambilan (WITA)</label>
-                                <input class="input" id="pickup_time" name="pickup_time" type="time" value="{{ old('pickup_time') }}" required
-                                       @error('pickup_time') aria-invalid="true" aria-describedby="pickup_time-error" @enderror>
-                                @error('pickup_time')<p class="alert-error field-error" id="pickup_time-error">{{ $message }}</p>@enderror
+                        </fieldset>
+
+                        <div id="box-pickup" @if ($selectedFulfillment === 'delivery') hidden @endif>
+                            <h3 class="admin-section-title">Jadwal pengambilan</h3>
+                            <p class="admin-hint">Pesanan diambil di toko {{ config('store.name') }}. Pilih tanggal dan jam pengambilan.</p>
+                            <div class="admin-field-grid">
+                                <div class="admin-field">
+                                    <label for="pickup_date" class="admin-label">Tanggal pengambilan</label>
+                                    <input class="input" id="pickup_date" name="pickup_date" type="date" value="{{ old('pickup_date', \Carbon\Carbon::now(config('store.reporting_timezone'))->addDay()->toDateString()) }}"
+                                           min="{{ \Carbon\Carbon::now(config('store.reporting_timezone'))->toDateString() }}"
+                                           @error('pickup_date') aria-invalid="true" aria-describedby="pickup_date-error" @enderror>
+                                    @error('pickup_date')<p class="alert-error field-error" id="pickup_date-error">{{ $message }}</p>@enderror
+                                </div>
+                                <div class="admin-field">
+                                    <label for="pickup_time" class="admin-label">Jam pengambilan (WITA)</label>
+                                    <input class="input" id="pickup_time" name="pickup_time" type="time" value="{{ old('pickup_time', '10:00') }}"
+                                           @error('pickup_time') aria-invalid="true" aria-describedby="pickup_time-error" @enderror>
+                                    @error('pickup_time')<p class="alert-error field-error" id="pickup_time-error">{{ $message }}</p>@enderror
+                                </div>
                             </div>
+                        </div>
+
+                        <div id="box-delivery" @if ($selectedFulfillment !== 'delivery') hidden @endif>
+                            <h3 class="admin-section-title">Detail pengiriman ekspedisi</h3>
+                            <div class="admin-form">
+                                <div class="admin-field">
+                                    <label for="courier_code" class="admin-label">Pilih ekspedisi</label>
+                                    <select class="input" id="courier_code" name="courier_code">
+                                        @foreach ($couriers as $cKey => $courier)
+                                            <option value="{{ $cKey }}" @selected(old('courier_code') === $cKey)>
+                                                {{ $courier['name'] }} &mdash; Rp {{ number_format((int) $courier['cost_idr'], 0, ',', '.') }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('courier_code')<p class="alert-error field-error">{{ $message }}</p>@enderror
+                                </div>
+
+                                @if ($addresses->isNotEmpty())
+                                    <div class="admin-field">
+                                        <label for="address_id" class="admin-label">Gunakan alamat tersimpan (opsional)</label>
+                                        <select class="input" id="address_id" name="address_id">
+                                            <option value="">-- Isi alamat baru di bawah --</option>
+                                            @foreach ($addresses as $addr)
+                                                <option value="{{ $addr->id }}" @selected((string) old('address_id', $addresses->first()->id) === (string) $addr->id)>
+                                                    [{{ $addr->address_type }}] {{ $addr->recipient_name }} ({{ $addr->recipient_phone }}) &mdash; {{ $addr->street_address }}, {{ $addr->city }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('address_id')<p class="alert-error field-error">{{ $message }}</p>@enderror
+                                    </div>
+                                @endif
+
+                                <div class="admin-field-grid">
+                                    <div class="admin-field">
+                                        <label for="shipping_recipient_name" class="admin-label">Nama penerima</label>
+                                        <input class="input" id="shipping_recipient_name" name="shipping_recipient_name" value="{{ old('shipping_recipient_name', $user?->name) }}" placeholder="Nama lengkap penerima">
+                                        @error('shipping_recipient_name')<p class="alert-error field-error">{{ $message }}</p>@enderror
+                                    </div>
+                                    <div class="admin-field">
+                                        <label for="shipping_phone" class="admin-label">Nomor WhatsApp / HP penerima</label>
+                                        <input class="input" id="shipping_phone" name="shipping_phone" value="{{ old('shipping_phone', $user?->phone) }}" placeholder="Contoh: 081234567890">
+                                        @error('shipping_phone')<p class="alert-error field-error">{{ $message }}</p>@enderror
+                                    </div>
+                                </div>
+
+                                <div class="admin-field">
+                                    <label for="shipping_address" class="admin-label">Alamat lengkap pengiriman (jika tidak memilih alamat tersimpan)</label>
+                                    <textarea class="input admin-textarea" id="shipping_address" name="shipping_address" rows="3" placeholder="Nama jalan, nomor rumah, kelurahan, kecamatan, kota, kode pos">{{ old('shipping_address') }}</textarea>
+                                    @error('shipping_address')<p class="alert-error field-error">{{ $message }}</p>@enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="buyer_note" class="admin-label">Catatan pesanan (opsional)</label>
+                            <input class="input" id="buyer_note" name="buyer_note" maxlength="500" value="{{ old('buyer_note') }}" placeholder="Catatan tambahan untuk penjual">
+                            @error('buyer_note')<p class="alert-error field-error">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
@@ -106,8 +191,9 @@
                             </li>
                         @endforeach
                     </ul>
+                    <p class="admin-hint">Jika memilih pengiriman ekspedisi, ongkos kirim kurir akan ditambahkan otomatis pada total tagihan pesanan.</p>
                     <p class="buyer-total-line">
-                        <span>Total:</span>
+                        <span>Subtotal Barang:</span>
                         <strong>{{ 'Rp '.number_format($total_idr, 0, ',', '.') }}</strong>
                     </p>
                     <button class="btn-primary buyer-cta-block" type="submit">Buat Pesanan</button>

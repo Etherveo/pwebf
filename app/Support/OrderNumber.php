@@ -11,9 +11,9 @@ class OrderNumber
 
     public static function generate(): string
     {
-        $prefix = strtoupper(trim((string) config('store.order_prefix', 'JBR')));
+        $prefix = strtoupper(trim((string) config('store.order_prefix', 'CL')));
         if ($prefix === '') {
-            $prefix = 'JBR';
+            $prefix = 'CL';
         }
 
         do {

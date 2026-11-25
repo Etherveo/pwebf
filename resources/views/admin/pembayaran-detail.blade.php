@@ -94,6 +94,17 @@
                             <dt class="admin-kv-row-label">Kode referensi</dt>
                             <dd class="admin-kv-row-val"><code class="admin-code">{{ $payment->reference_code }}</code></dd>
                         </div>
+                        <div class="admin-kv-row">
+                            <dt class="admin-kv-row-label">Bukti bayar</dt>
+                            <dd class="admin-kv-row-val">
+                                @if ($payment->hasProof())
+                                    <a class="admin-cell-link" href="{{ route('admin.pembayaran.bukti.show', $payment) }}" target="_blank" rel="noopener">Lihat bukti bayar</a>
+                                    <span class="admin-cell-sub">({{ $payment->proof_uploaded_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA)</span>
+                                @else
+                                    <span class="admin-cell-sub">Belum diunggah</span>
+                                @endif
+                            </dd>
+                        </div>
                     </dl>
                 </section>
 
@@ -119,6 +130,12 @@
             </div>
 
             <div class="admin-form-actions">
+                @if ($payment->status === 'pending' && $order->status === 'menunggu_pembayaran')
+                    <form method="POST" action="{{ route('admin.pesanan.konfirmasi-bayar', $order) }}" class="admin-inline-form">
+                        @csrf
+                        <button class="btn-primary" type="submit">Konfirmasi Pembayaran</button>
+                    </form>
+                @endif
                 <a class="btn-secondary" href="{{ route('admin.pembayaran.index') }}">Kembali ke daftar pembayaran</a>
                 <a class="btn-secondary" href="{{ route('admin.pesanan.show', $order) }}">Lihat pesanan</a>
             </div>

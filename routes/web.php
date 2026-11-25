@@ -38,6 +38,7 @@ Route::get('/admin/masuk', function () {
 Route::get('/katalog', [CatalogController::class, 'index'])->name('katalog');
 Route::get('/katalog/cari', [CatalogController::class, 'index'])->name('katalog.cari');
 Route::get('/produk/{produk}', [CatalogController::class, 'show'])->name('produk.show');
+Route::get('/media/produk/{produk}', [CatalogController::class, 'photo'])->name('produk.foto');
 
 // Buyer authenticated surface
 Route::middleware(['auth:web', 'active', 'role:pembeli', 'no-cache'])->group(function () {
@@ -56,6 +57,8 @@ Route::middleware(['auth:web', 'active', 'role:pembeli', 'no-cache'])->group(fun
     Route::get('/pesanan/{order}/bayar', [PaymentInstructionController::class, 'show'])->name('pesanan.bayar');
     Route::post('/pesanan/{order}/bayar-ulang', [PaymentInstructionController::class, 'repay'])->name('pesanan.bayar-ulang');
     Route::get('/pembayaran/{payment}/status', [PaymentInstructionController::class, 'status'])->name('pembayaran.status');
+    Route::post('/pembayaran/{payment}/bukti', [PaymentInstructionController::class, 'uploadProof'])->name('pembayaran.bukti.store');
+    Route::get('/pembayaran/{payment}/bukti', [PaymentInstructionController::class, 'viewProof'])->name('pembayaran.bukti.show');
 
     Route::get('/pembayaran', [ShopPaymentController::class, 'index'])->name('pembayaran.index');
     Route::get('/pembayaran/{payment}', [ShopPaymentController::class, 'show'])->name('pembayaran.show');
@@ -97,9 +100,12 @@ Route::middleware(['auth:web', 'active', 'role:admin_toko', 'no-cache'])->group(
     Route::post('/admin/akun-pembeli/{account}/status', [BuyerAccountController::class, 'updateStatus'])->name('admin.akun-pembeli.status');
 
     Route::get('/admin/pesanan', [AdminOrderController::class, 'index'])->name('admin.pesanan.index');
+    Route::get('/admin/pesanan/ekspor-csv', [AdminOrderController::class, 'exportCsv'])->name('admin.pesanan.csv');
     Route::get('/admin/pesanan/{order}', [AdminOrderController::class, 'show'])->name('admin.pesanan.show');
     Route::post('/admin/pesanan/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('admin.pesanan.status');
+    Route::post('/admin/pesanan/{order}/konfirmasi-bayar', [AdminOrderController::class, 'confirmPayment'])->name('admin.pesanan.konfirmasi-bayar');
 
     Route::get('/admin/pembayaran', [AdminPaymentController::class, 'index'])->name('admin.pembayaran.index');
     Route::get('/admin/pembayaran/{payment}', [AdminPaymentController::class, 'show'])->name('admin.pembayaran.show');
+    Route::get('/admin/pembayaran/{payment}/bukti', [AdminPaymentController::class, 'viewProof'])->name('admin.pembayaran.bukti.show');
 });

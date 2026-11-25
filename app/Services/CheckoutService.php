@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Address;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
@@ -66,13 +67,18 @@ class CheckoutService
         return (string) Str::uuid();
     }
 
-    public function checkout(User $user, string $paymentMethod, ?string $checkoutKey, ?Carbon $pickupAt = null): Order
-    {
+    public function checkout(
+        User $user,
+        string $paymentMethod,
+        ?string $checkoutKey,
+        ?Carbon $pickupAt = null,
+        array $fulfillment = [],
+    ): Order {
         $checkoutKey = $checkoutKey !== null && trim($checkoutKey) !== ''
             ? trim($checkoutKey)
             : $this->newCheckoutKey();
 
-        return DB::transaction(function () use ($user, $paymentMethod, $checkoutKey, $pickupAt) {
+        return DB::transaction(function () use ($user, $paymentMethod, $checkoutKey, $pickupAt, $fulfillment) {
             // Idempotency first: a re-posted key returns the order that
             // the first post created, even though the cart is empty now.
             $existing = Order::query()
@@ -109,9 +115,8 @@ class CheckoutService
             }
 
             // ORD-04: total is computed on the server from current
-            // prices; any client-supplied amount is ignored (there is
-            // no amount field at all). Prices are snapshotted per item.
-            $total = 0;
+            // prices; any client-supplied amount is ignored.
+            $subtotal = 0;
             $lines = [];
             foreach ($items as $item) {
                 $price = (int) $item->product->price_idr;
@@ -122,15 +127,81 @@ class CheckoutService
                     'quantity' => (int) $item->quantity,
                     'subtotal_idr' => $price * (int) $item->quantity,
                 ];
-                $total += $price * (int) $item->quantity;
+                $subtotal += $price * (int) $item->quantity;
             }
             usort($lines, fn (array $a, array $b) => $a['product_id'] <=> $b['product_id']);
+
+            $fulfillmentMethod = ($fulfillment['fulfillment_method'] ?? 'pickup') === 'delivery'
+                ? 'delivery'
+                : 'pickup';
+
+            $shippingCost = 0;
+            $courierCode = null;
+            $courierName = null;
+            $recipientName = null;
+            $recipientPhone = null;
+            $addressSnapshot = null;
+
+            if ($fulfillmentMethod === 'delivery') {
+                $code = (string) ($fulfillment['courier_code'] ?? '');
+                $courier = config('store.couriers.'.$code);
+
+                if (! is_array($courier)) {
+                    throw ValidationException::withMessages([
+                        'courier_code' => 'Ekspedisi pengiriman tidak dikenal.',
+                    ]);
+                }
+
+                $courierCode = $code;
+                $courierName = (string) ($courier['name'] ?? strtoupper($code));
+                $shippingCost = max(0, (int) ($courier['cost_idr'] ?? 0));
+
+                if (! empty($fulfillment['address_id'])) {
+                    $address = Address::query()
+                        ->where('user_id', $user->id)
+                        ->find((int) $fulfillment['address_id']);
+
+                    if ($address === null) {
+                        throw ValidationException::withMessages([
+                            'address_id' => 'Alamat pengiriman tidak ditemukan.',
+                        ]);
+                    }
+
+                    $recipientName = $address->recipient_name;
+                    $recipientPhone = $address->recipient_phone;
+                    $addressSnapshot = implode(', ', array_filter([
+                        $address->street_address,
+                        $address->village,
+                        $address->district,
+                        $address->city,
+                        $address->province,
+                        $address->postal_code,
+                    ]));
+                } else {
+                    $recipientName = trim((string) ($fulfillment['shipping_recipient_name'] ?? ''));
+                    $recipientPhone = trim((string) ($fulfillment['shipping_phone'] ?? ''));
+                    $addressSnapshot = trim((string) ($fulfillment['shipping_address'] ?? ''));
+                }
+
+                $pickupAt = null;
+            }
+
+            $total = $subtotal + $shippingCost;
 
             $order = Order::create([
                 'order_number' => OrderNumber::generate(),
                 'user_id' => $user->id,
                 'status' => 'menunggu_pembayaran',
+                'fulfillment_method' => $fulfillmentMethod,
+                'subtotal_idr' => $subtotal,
+                'shipping_cost_idr' => $shippingCost,
                 'total_idr' => $total,
+                'courier_code' => $courierCode,
+                'courier_name' => $courierName,
+                'shipping_recipient_name' => $recipientName,
+                'shipping_phone' => $recipientPhone,
+                'shipping_address_snapshot' => $addressSnapshot,
+                'buyer_note' => $fulfillment['buyer_note'] ?? null,
                 'payment_deadline_at' => now()->addMinutes($this->expiryMinutes()),
                 'paid_at' => null,
                 'pickup_at' => $pickupAt,

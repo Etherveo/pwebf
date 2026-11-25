@@ -2,12 +2,13 @@
 
 use App\Models\User;
 
-test('default store brand renders Jubarol and omits Ira Stationery, Gorontalo, and Developer UI', function () {
+test('default store brand renders Cloraamine and omits Ira Stationery, Gorontalo, and Developer UI', function () {
     $pages = ['/', '/katalog', '/masuk', '/daftar'];
 
     foreach ($pages as $uri) {
         $this->get($uri)->assertOk()
-            ->assertSee('Jubarol')
+            ->assertSee('Cloraamine')
+            ->assertSee('@cloraamine')
             ->assertDontSee('Ira Stationery')
             ->assertDontSee('Toko Ira')
             ->assertDontSee('Gorontalo')
@@ -18,7 +19,7 @@ test('default store brand renders Jubarol and omits Ira Stationery, Gorontalo, a
     $admin = User::factory()->admin()->create();
     $this->actingAs($admin, 'web');
     $this->get('/admin')->assertOk()
-        ->assertSee('Jubarol')
+        ->assertSee('Cloraamine')
         ->assertDontSee('Ira Stationery')
         ->assertDontSee('Gorontalo')
         ->assertDontSee('panel Developer')
@@ -37,13 +38,13 @@ test('store brand name and copy switch cleanly from centralized config', functio
         ->assertSee('<title>Kios Aksara</title>', false)
         ->assertSee('Kios Aksara')
         ->assertSee('Makassar')
-        ->assertDontSee('Jubarol')
+        ->assertDontSee('Cloraamine')
         ->assertDontSee('Ira Stationery');
 
     $this->get('/masuk')->assertOk()
         ->assertSee('Kios Aksara')
         ->assertSee('Ringkas setiap hari.')
-        ->assertDontSee('Jubarol');
+        ->assertDontSee('Cloraamine');
 });
 
 test('buyer views render minimalist shell without simulation or trace elements', function () {
@@ -51,12 +52,12 @@ test('buyer views render minimalist shell without simulation or trace elements',
     $this->actingAs($buyer, 'web');
 
     $this->get('/keranjang')->assertOk()
-        ->assertSee('Jubarol')
+        ->assertSee('Cloraamine')
         ->assertDontSee('Toko Ira')
         ->assertDontSee('SIMULASI');
 
     $this->get('/profil')->assertOk()
-        ->assertSee('Jubarol')
+        ->assertSee('Cloraamine')
         ->assertDontSee('Ira Stationery');
 });
 

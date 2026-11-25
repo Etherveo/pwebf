@@ -9,11 +9,15 @@ use App\Models\Payment;
 use App\Payments\QrRenderer;
 use App\Services\OrderExpiryService;
 use App\Services\PaymentService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 // M3b PAY-06..14, PAY-31; M3c PAY-13/PAY-45..47. The buyer-facing
 // payment instruction page (GET /pesanan/{order}/bayar) and the
@@ -149,5 +153,56 @@ class PaymentInstructionController extends Controller
         return $host === 'localhost'
             || $host === '127.0.0.1'
             || str_starts_with($host, '127.');
+    }
+
+    public function uploadProof(Request $request, string $payment): RedirectResponse
+    {
+        $user = Auth::guard('web')->user();
+        $found = Payment::query()->where('user_id', $user->id)->findOrFail($payment);
+
+        $this->expiry->expireIfOverdue($found->order);
+        $found = $found->fresh();
+
+        if ($found->status !== 'pending') {
+            return redirect()->route('pesanan.show', $found->order_id)
+                ->withErrors(['proof' => 'Bukti pembayaran hanya dapat diunggah saat pembayaran masih menunggu.']);
+        }
+
+        $request->validate([
+            'proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ], [
+            'proof.required' => 'Pilih berkas bukti pembayaran terlebih dahulu.',
+            'proof.mimes' => 'Bukti pembayaran harus berformat JPG, PNG, atau WEBP.',
+            'proof.max' => 'Ukuran bukti pembayaran maksimal 5 MB.',
+        ]);
+
+        if ($found->hasProof()) {
+            Storage::disk('local')->delete($found->proof_path);
+        }
+
+        $path = $request->file('proof')->store('payment-proofs', 'local');
+        $found->update([
+            'proof_path' => $path,
+            'proof_uploaded_at' => now(),
+        ]);
+
+        return redirect()->route('pesanan.bayar', $found->order_id)
+            ->with('status', 'Bukti pembayaran berhasil diunggah. Admin akan segera memverifikasi pembayaranmu.');
+    }
+
+    public function viewProof(Request $request, string $payment): StreamedResponse
+    {
+        $user = $request->user('web');
+        $found = Payment::query()->findOrFail($payment);
+
+        if ($user === null || (! $user->isAdmin() && (int) $found->user_id !== (int) $user->id)) {
+            throw new ModelNotFoundException;
+        }
+
+        if (! $found->hasProof() || ! Storage::disk('local')->exists($found->proof_path)) {
+            abort(404);
+        }
+
+        return Storage::disk('local')->response($found->proof_path);
     }
 }

@@ -64,8 +64,38 @@
                 @endif
                 @if ($order->picked_up_at)
                     <div class="admin-kv-item">
-                        <span class="admin-kv-label">Diambil</span>
+                        <span class="admin-kv-label">Diambil / Selesai</span>
                         <span class="admin-kv-value">{{ $order->picked_up_at?->setTimezone(config('store.reporting_timezone'))->format('d M Y H:i') }} WITA</span>
+                    </div>
+                @endif
+                <div class="admin-kv-item">
+                    <span class="admin-kv-label">Pemenuhan</span>
+                    <span class="admin-kv-value">{{ $order->fulfillmentLabel() }}</span>
+                </div>
+                @if ($order->isDelivery())
+                    <div class="admin-kv-item">
+                        <span class="admin-kv-label">Ekspedisi</span>
+                        <span class="admin-kv-value">{{ $order->courier_name }} ({{ $order->formattedShippingCost() }})</span>
+                    </div>
+                    <div class="admin-kv-item">
+                        <span class="admin-kv-label">Penerima</span>
+                        <span class="admin-kv-value">{{ $order->shipping_recipient_name }} ({{ $order->shipping_phone }})</span>
+                    </div>
+                    <div class="admin-kv-item">
+                        <span class="admin-kv-label">Alamat Pengiriman</span>
+                        <span class="admin-kv-value">{{ $order->shipping_address_snapshot }}</span>
+                    </div>
+                    @if ($order->tracking_number)
+                        <div class="admin-kv-item">
+                            <span class="admin-kv-label">Nomor Resi</span>
+                            <span class="admin-kv-value"><code class="admin-code">{{ $order->tracking_number }}</code></span>
+                        </div>
+                    @endif
+                @endif
+                @if ($order->buyer_note)
+                    <div class="admin-kv-item">
+                        <span class="admin-kv-label">Catatan Pembeli</span>
+                        <span class="admin-kv-value">{{ $order->buyer_note }}</span>
                     </div>
                 @endif
             </div>
@@ -116,8 +146,17 @@
                                     <span>&mdash; Status: <strong>{{ $payment->statusLabel() }}</strong></span>
                                     <span>&mdash; Nominal: <strong>{{ $payment->formattedAmount() }}</strong></span>
                                     <span>&mdash; Referensi: <code class="admin-code">{{ $payment->reference_code }}</code></span>
+                                    @if ($payment->hasProof())
+                                        <span>&mdash; <a class="admin-action-link" href="{{ route('admin.pembayaran.bukti.show', $payment) }}" target="_blank" rel="noopener">Lihat bukti bayar</a></span>
+                                    @endif
                                     <span>&mdash; <a class="admin-action-link" href="{{ route('admin.pembayaran.show', $payment) }}">Detail pembayaran</a></span>
                                 </p>
+                                @if ($payment->status === 'pending' && $order->status === 'menunggu_pembayaran')
+                                    <form method="POST" action="{{ route('admin.pesanan.konfirmasi-bayar', $order) }}" style="margin-top: 0.5rem;">
+                                        @csrf
+                                        <button class="btn-primary" type="submit">Konfirmasi Pembayaran</button>
+                                    </form>
+                                @endif
                                 @if ($payment->transitions->isNotEmpty())
                                     <ul class="admin-timeline">
                                     @foreach ($payment->transitions->sortBy('occurred_at') as $transition)
@@ -148,16 +187,32 @@
         <div class="card admin-panel">
             <h2 class="admin-section-title">Pemenuhan</h2>
             @if ($order->status === 'dibayar')
-                <form method="POST" action="{{ route('admin.pesanan.status', $order) }}" class="admin-form-actions">
+                <form method="POST" action="{{ route('admin.pesanan.status', $order) }}" class="admin-form">
                     @csrf
                     <input type="hidden" name="to_status" value="diproses">
-                    <button class="btn-primary" type="submit">Tandai Siap Diambil</button>
+                    @if ($order->isDelivery())
+                        <div class="admin-field">
+                            <label for="tracking_number" class="admin-label">Nomor resi pengiriman (opsional)</label>
+                            <input class="input" id="tracking_number" name="tracking_number" value="{{ old('tracking_number', $order->tracking_number) }}" placeholder="Masukkan nomor resi kurir">
+                        </div>
+                    @endif
+                    <div class="admin-form-actions">
+                        <button class="btn-primary" type="submit">{{ $order->isDelivery() ? 'Tandai Sedang Dikirim' : 'Tandai Siap Diambil' }}</button>
+                    </div>
                 </form>
             @elseif ($order->status === 'diproses')
-                <form method="POST" action="{{ route('admin.pesanan.status', $order) }}" class="admin-form-actions">
+                <form method="POST" action="{{ route('admin.pesanan.status', $order) }}" class="admin-form">
                     @csrf
                     <input type="hidden" name="to_status" value="selesai">
-                    <button class="btn-primary" type="submit">Tandai Sudah Diambil</button>
+                    @if ($order->isDelivery())
+                        <div class="admin-field">
+                            <label for="tracking_number" class="admin-label">Perbarui nomor resi (opsional)</label>
+                            <input class="input" id="tracking_number" name="tracking_number" value="{{ old('tracking_number', $order->tracking_number) }}" placeholder="Masukkan nomor resi kurir">
+                        </div>
+                    @endif
+                    <div class="admin-form-actions">
+                        <button class="btn-primary" type="submit">{{ $order->isDelivery() ? 'Tandai Pesanan Selesai' : 'Tandai Sudah Diambil' }}</button>
+                    </div>
                 </form>
             @else
                 <p class="admin-hint">Tidak ada aksi pemenuhan untuk status {{ $order->statusLabel() }}.</p>

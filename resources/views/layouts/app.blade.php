@@ -152,7 +152,12 @@
     @yield('content')
 </main>
 <footer class="no-print">
-    <small>{{ $storeBrand }}{{ $storeLocation ? ' • '.$storeLocation : '' }} &bull; {{ $storeTzLabel }} (Asia/Makassar)</small>
+    <small>
+        {{ $storeBrand }}{{ $storeLocation ? ' • '.$storeLocation : '' }} &bull; {{ $storeTzLabel }} (Asia/Makassar)
+        @foreach (config('store.socials', []) as $social)
+            &bull; <a href="{{ $social['url'] }}" target="_blank" rel="noopener" style="color: inherit;">{{ $social['platform'] }} {{ $social['handle'] }}</a>
+        @endforeach
+    </small>
 </footer>
 </body>
 </html>

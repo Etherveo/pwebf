@@ -1,9 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- UI polish Tahap 2 (UI.md §9.2). Pembeli (@auth): form POST tidak berubah.
-         Tamu (@guest): tombol membuka popup "Masuk dulu untuk membeli";
-         POST /keranjang/tambah tetap dikunci auth di sisi server. --}}
     @php($habis = $product->stock_available <= 0)
     @php($isBuyer = auth('web')->user()?->isPembeli() === true)
     <div class="shop-page">
@@ -14,17 +11,45 @@
         </nav>
 
         <article class="product-detail">
-            <div class="product-detail-art product-art" aria-hidden="true">
-                <span class="product-art-tag">{{ $product->category?->name }}</span>
-                <span class="product-art-tile product-art-tile-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></svg>
+            <div class="product-detail-art product-art" @if (! $product->hasImage()) aria-hidden="true" @endif>
+                <span class="product-art-tag">
+                    {{ $product->category?->name }}
+                    @if ($product->is_preorder)
+                        &bull; Pre-Order
+                    @endif
                 </span>
+                @if ($product->hasImage())
+                    <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" style="width: 100%; max-height: 24rem; object-fit: contain; border-radius: inherit;">
+                @else
+                    <span class="product-art-tile product-art-tile-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></svg>
+                    </span>
+                @endif
             </div>
 
             <div class="product-detail-info">
+                <div class="analytics-sort-pills">
+                    <span class="status-chip {{ $product->condition === 'bekas' ? 'status-chip-warning' : 'status-chip-info' }}">
+                        <span>Kondisi: {{ $product->conditionLabel() }}</span>
+                    </span>
+                    @if ($product->is_preorder)
+                        <span class="status-chip status-chip-warning">
+                            <span>Pre-Order</span>
+                        </span>
+                    @endif
+                    @if ($product->is_featured)
+                        <span class="status-chip status-chip-success">
+                            <span>Unggulan</span>
+                        </span>
+                    @endif
+                </div>
+
                 <h1 class="shop-title">{{ $product->name }}</h1>
                 <p class="product-category">Kategori: {{ $product->category?->name }}</p>
                 <p class="product-price product-price-lg">Harga: {{ $product->formattedPrice() }}</p>
+                @if ($product->is_preorder && $product->preorder_eta)
+                    <p class="admin-info-box"><strong>Info Pre-Order:</strong> {{ $product->preorder_eta }}</p>
+                @endif
                 @if ($product->description)
                     <p class="product-description">{{ $product->description }}</p>
                 @endif

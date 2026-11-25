@@ -18,15 +18,34 @@ class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
+    public const CONDITIONS = ['baru', 'bekas'];
+
+    public const CONDITION_LABELS = [
+        'baru' => 'Baru',
+        'bekas' => 'Bekas',
+    ];
+
     protected $fillable = [
-        'category_id', 'name', 'description', 'price_idr',
-        'stock_on_hand', 'stock_reserved', 'is_active',
+        'category_id',
+        'name',
+        'description',
+        'price_idr',
+        'condition',
+        'is_preorder',
+        'preorder_eta',
+        'is_featured',
+        'image_path',
+        'stock_on_hand',
+        'stock_reserved',
+        'is_active',
     ];
 
     protected function casts(): array
     {
         return [
             'price_idr' => 'integer',
+            'is_preorder' => 'boolean',
+            'is_featured' => 'boolean',
             'stock_on_hand' => 'integer',
             'stock_reserved' => 'integer',
             'is_active' => 'boolean',
@@ -53,5 +72,20 @@ class Product extends Model
     public function formattedPrice(): string
     {
         return 'Rp '.number_format((int) $this->price_idr, 0, ',', '.');
+    }
+
+    public function conditionLabel(): string
+    {
+        return self::CONDITION_LABELS[$this->condition ?? 'baru'] ?? 'Baru';
+    }
+
+    public function hasImage(): bool
+    {
+        return is_string($this->image_path) && trim($this->image_path) !== '';
+    }
+
+    public function imageUrl(): ?string
+    {
+        return $this->hasImage() ? route('produk.foto', $this) : null;
     }
 }
