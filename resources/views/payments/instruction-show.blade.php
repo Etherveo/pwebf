@@ -56,7 +56,10 @@
                                 <p class="admin-hint">Pindai untuk membuka halaman pembayaran:</p>
                                 <div class="qr-small pay-qr-frame" data-qr-url="{{ $payment->qr_url }}">
                                     <img class="qr-image" alt="Kode QR pendamping pembayaran" hidden>
-                                    {!! $qrHtml !!}
+                                    <div class="qr-fallback" role="img" aria-label="Tautan atau payload pembayaran">
+                                        <p><strong>QR belum tersedia &mdash; gunakan tautan atau kode di bawah ini.</strong></p>
+                                        <p><code>{{ $payment->qr_url }}</code></p>
+                                    </div>
                                 </div>
                             </div>
                         @endif
@@ -74,7 +77,10 @@
                                 <h3 class="pay-sub-heading">Kode QR</h3>
                                 <div class="qr-large pay-qr-frame" data-qr-url="{{ $payment->qr_url }}">
                                     <img class="qr-image" alt="Kode QR pembayaran" width="240" height="240" hidden>
-                                    {!! $qrHtml !!}
+                                    <div class="qr-fallback" role="img" aria-label="Tautan atau payload pembayaran">
+                                        <p><strong>QR belum tersedia &mdash; gunakan tautan atau kode di bawah ini.</strong></p>
+                                        <p><code>{{ $payment->qr_url }}</code></p>
+                                    </div>
                                 </div>
                                 <p class="pay-url-fallback">Atau buka tautan ini: <a class="admin-cell-link" href="{{ $payment->qr_url }}">{{ $payment->qr_url }}</a></p>
                             </div>

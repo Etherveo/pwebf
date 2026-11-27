@@ -21,13 +21,9 @@ use Illuminate\Validation\ValidationException;
 // purchase events can never double (PAY-27 maps that rejection to
 // 200 already_processed).
 //
-// M4 SIM-29: transition()/recordInitial()/writeTransition() accept an
-// optional ?Carbon $at. When null (the default) every stamp is now(),
-// exactly as before; when given, the stamps use $at, so a backdated
-// simulation run can place the transition inside its period. The
-// mark* cascades are NOT extended and NOT used by the simulator
-// (rencana §2.4/R2: they reject expired payments, touch stock, and
-// hardcode their triggers); the simulator uses transition() directly.
+// transition()/recordInitial()/writeTransition() accept an optional
+// ?Carbon $at (defaults to now() when null). The mark* cascades run
+// payment + order + stock + events atomically in one transaction.
 class PaymentStateMachine
 {
     public const TRANSITIONS = [

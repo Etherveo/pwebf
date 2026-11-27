@@ -17,7 +17,7 @@ interface PaymentAdapter
     // Build the pay instruction (QR/VA/token) and expiry for one payment.
     public function createPayment(Order $order, string $method, Payment $payment): PaymentInstruction;
 
-    // Latest status from the provider side (simulator: our own database).
+    // Latest status from the provider side (or local DB for manual driver).
     public function getPaymentStatus(string $paymentId): PaymentStatus;
 
     // Validate and apply a callback; returns a structured result

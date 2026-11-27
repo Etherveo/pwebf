@@ -21,8 +21,6 @@ return new class extends Migration
             $table->text('street_address');
             $table->enum('address_type', ['Rumah', 'Kantor', 'Lainnya'])->default('Rumah');
             $table->timestamps();
-
-            $table->index('user_id');
         });
     }
 

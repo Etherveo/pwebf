@@ -46,8 +46,8 @@ class CatalogController extends Controller
             ->when($request->filled('q'), function ($q) use ($request) {
                 $term = $this->escapedLikeTerm((string) $request->input('q'));
                 $q->where(function ($inner) use ($term) {
-                    $inner->whereRaw("lower(name) LIKE ? ESCAPE '\\'", [$term])
-                        ->orWhereRaw("lower(description) LIKE ? ESCAPE '\\'", [$term]);
+                    $inner->whereRaw("lower(name) LIKE ? ESCAPE '!'", [$term])
+                        ->orWhereRaw("lower(description) LIKE ? ESCAPE '!'", [$term]);
                 });
             });
 
@@ -103,8 +103,8 @@ class CatalogController extends Controller
     private function escapedLikeTerm(string $keyword): string
     {
         $escaped = str_replace(
-            ['\\', '%', '_'],
-            ['\\\\', '\\%', '\\_'],
+            ['!', '%', '_'],
+            ['!!', '!%', '!_'],
             mb_strtolower($keyword),
         );
 

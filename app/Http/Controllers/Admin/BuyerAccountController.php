@@ -11,7 +11,7 @@ use Illuminate\View\View;
 
 // ACC-11/12/13. All queries are scoped to role=pembeli (ACC-09 groundwork:
 // buyer_id is never taken from a form/query; the resource id in the URL is
-// only ever resolved inside the pembeli scope, so an admin/developer id
+// only ever resolved inside the pembeli scope, so an admin_toko id
 // here behaves exactly like a missing id: 404).
 class BuyerAccountController extends Controller
 {

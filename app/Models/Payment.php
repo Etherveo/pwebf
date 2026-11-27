@@ -10,8 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // M3a/M3b PAY-03/PAY-06/PAY-28, blueprint §6.2. id is a ULID
-// (payment_id). qr_url is the simulator-page URL
-// (APP_URL + /pay/sim/<token>), filled by PaymentService in M3b.
+// (payment_id). qr_url stores the provider payment/QR URL when present.
 // Status changes never go through update() directly: they go through
 // PaymentStateMachine, which also writes payment_status_transitions.
 class Payment extends Model
@@ -36,14 +35,16 @@ class Payment extends Model
     protected $fillable = [
         'order_id', 'user_id', 'provider', 'provider_payment_id',
         'payment_method', 'amount_idr', 'currency', 'status',
-        'reference_code', 'payment_token', 'qr_url', 'proof_path',
-        'proof_uploaded_at', 'expires_at', 'paid_at',
+        'reference_code', 'payment_token', 'payment_url', 'qr_string',
+        'snap_token', 'qr_url', 'proof_path', 'proof_uploaded_at',
+        'metadata_json', 'expires_at', 'paid_at',
     ];
 
     protected function casts(): array
     {
         return [
             'amount_idr' => 'integer',
+            'metadata_json' => 'array',
             'proof_uploaded_at' => 'datetime',
             'expires_at' => 'datetime',
             'paid_at' => 'datetime',

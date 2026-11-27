@@ -15,9 +15,10 @@ class CheckConfigCommand extends Command
     public function handle(): int
     {
         $failures = [];
+        $driver = (string) config('database.default');
 
-        if (config('database.default') !== 'sqlite') {
-            $failures[] = 'DB_CONNECTION harus sqlite, saat ini: '.(string) config('database.default');
+        if (! in_array($driver, ['mysql', 'mariadb', 'sqlite'], true)) {
+            $failures[] = 'DB_CONNECTION harus mysql, mariadb, atau sqlite, saat ini: '.$driver;
         }
 
         try {
@@ -51,7 +52,7 @@ class CheckConfigCommand extends Command
             return self::FAILURE;
         }
 
-        $this->info('Store config OK: SQLite, APP_KEY, UTC storage, WITA reporting, payment driver.');
+        $this->info('Store config OK: '.strtoupper($driver).', APP_KEY, UTC storage, WITA reporting, payment driver.');
 
         return self::SUCCESS;
     }

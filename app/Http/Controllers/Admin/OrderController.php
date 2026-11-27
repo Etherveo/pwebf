@@ -143,8 +143,8 @@ class OrderController extends Controller
             ->when($this->isDate($request->input('sampai')),
                 fn ($q) => $q->whereDate('created_at', '<=', $request->input('sampai')))
             ->when($request->filled('q'), function ($q) use ($request) {
-                $term = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], (string) $request->input('q')).'%';
-                $q->whereRaw("order_number LIKE ? ESCAPE '\\'", [$term]);
+                $term = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], (string) $request->input('q')).'%';
+                $q->whereRaw("order_number LIKE ? ESCAPE '!'", [$term]);
             })
             ->orderByDesc('created_at')
             ->orderByDesc('id');

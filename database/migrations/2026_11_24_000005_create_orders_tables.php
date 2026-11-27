@@ -20,7 +20,17 @@ return new class extends Migration
                 'dibatalkan',
                 'kedaluwarsa',
             ]);
+            $table->string('fulfillment_method', 20)->default('pickup');
+            $table->unsignedBigInteger('subtotal_idr')->nullable();
+            $table->unsignedBigInteger('shipping_cost_idr')->default(0);
             $table->unsignedBigInteger('total_idr');
+            $table->string('courier_code', 30)->nullable();
+            $table->string('courier_name', 80)->nullable();
+            $table->string('shipping_recipient_name', 150)->nullable();
+            $table->string('shipping_phone', 40)->nullable();
+            $table->text('shipping_address_snapshot')->nullable();
+            $table->string('tracking_number', 100)->nullable();
+            $table->text('buyer_note')->nullable();
             $table->timestamp('payment_deadline_at');
             $table->timestamp('paid_at')->nullable();
             $table->timestamp('pickup_at')->nullable();
@@ -43,9 +53,6 @@ return new class extends Migration
             $table->unsignedInteger('quantity');
             $table->unsignedBigInteger('subtotal_idr');
             $table->timestamps();
-
-            $table->index('order_id');
-            $table->index('product_id');
         });
 
         // Append-only audit trail transisi status pesanan.

@@ -243,12 +243,21 @@ test('ACC-13 admin can deactivate and reactivate a buyer with a reason, and deac
     expect($buyer->fresh()->deactivation_reason)->toBeNull();
 });
 
-test('Store config check command passes with a valid configuration', function () {
-    config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
-    config(['database.default' => 'sqlite']);
-    config(['app.timezone' => 'UTC']);
-    config(['store.reporting_timezone' => 'Asia/Makassar']);
-    config(['payment.driver' => 'manual']);
+test('Store config check command passes with a valid configuration and rejects unsupported drivers', function () {
+    $originalDriver = config('database.default');
 
-    $this->artisan('store:check-config')->assertExitCode(0);
+    try {
+        config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
+        config(['database.default' => 'sqlite']);
+        config(['app.timezone' => 'UTC']);
+        config(['store.reporting_timezone' => 'Asia/Makassar']);
+        config(['payment.driver' => 'manual']);
+
+        $this->artisan('store:check-config')->assertExitCode(0);
+
+        config(['database.default' => 'unsupported_driver']);
+        $this->artisan('store:check-config')->assertExitCode(1);
+    } finally {
+        config(['database.default' => $originalDriver]);
+    }
 });

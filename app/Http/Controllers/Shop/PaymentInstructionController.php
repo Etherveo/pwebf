@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\RepayRequest;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Payments\QrRenderer;
 use App\Services\OrderExpiryService;
 use App\Services\PaymentService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -31,7 +30,6 @@ class PaymentInstructionController extends Controller
     public function __construct(
         private readonly OrderExpiryService $expiry,
         private readonly PaymentService $payments,
-        private readonly QrRenderer $qr,
     ) {}
 
     // PAY-11: instruction page for the order's pending payment.
@@ -63,7 +61,6 @@ class PaymentInstructionController extends Controller
             'payment' => $payment,
             'instruction' => $instruction,
             'method' => $method,
-            'qrHtml' => $instruction->qr !== null ? $this->qr->render($instruction->qr) : null,
             'expiresAtIso' => $payment->expires_at->toIso8601String(),
             'serverNowIso' => now()->toIso8601String(),
             'isLoopback' => $this->isLoopbackAppUrl(),

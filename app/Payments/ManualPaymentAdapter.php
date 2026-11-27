@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 // Adapter pembayaran netral sementara sebelum integrasi ke gateway riil
-// (Midtrans / Xendit / Tripay / Duitku). Tidak ada simulasi palsu:
-// instruksi dibangun dari kode referensi lokal & masa berlaku pesanan,
-// sementara verifikasi callback tetap melalui endpoint webhook bertanda tangan.
+// (Midtrans / Xendit / Tripay / Duitku). Instruksi dibangun dari kode referensi
+// lokal & masa berlaku pesanan, sementara verifikasi callback tetap melalui
+// endpoint webhook bertanda tangan.
 class ManualPaymentAdapter implements PaymentAdapter
 {
     public function __construct(

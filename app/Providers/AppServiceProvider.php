@@ -5,8 +5,6 @@ namespace App\Providers;
 use App\Models\Cart;
 use App\Payments\PaymentAdapter;
 use App\Payments\ProviderRegistry;
-use App\Payments\QrRenderer;
-use App\Payments\TextQrRenderer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -26,12 +24,6 @@ class AppServiceProvider extends ServiceProvider
                 (string) config('payment.driver', 'manual')
             ));
         });
-
-        // M3b PAY-58: QR rendering. TextQrRenderer is the fallback
-        // (URL as labelled text) while Ren's QR script is pending;
-        // swap this binding when the real QR implementation lands —
-        // nothing else changes (see QrRenderer).
-        $this->app->bind(QrRenderer::class, TextQrRenderer::class);
     }
 
     /**

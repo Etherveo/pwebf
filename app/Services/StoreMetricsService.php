@@ -233,7 +233,7 @@ class StoreMetricsService
                     [
                         'label' => 'Jumlah Aktivitas',
                         'data' => [$views, $carts, $bookings, $purchases],
-                        'backgroundColor' => ['#111827', '#374151', '#6B7280', '#15803D'],
+                        'backgroundColor' => ['#33200F', '#5C3D22', '#8C6A4A', '#15803D'],
                         'borderRadius' => 6,
                     ],
                 ],
@@ -314,14 +314,14 @@ class StoreMetricsService
                     [
                         'label' => 'Dilihat',
                         'data' => $viewSeries,
-                        'borderColor' => '#111827',
+                        'borderColor' => '#33200F',
                         'fill' => true,
                         'tension' => 0.25,
                     ],
                     [
                         'label' => 'Masuk Keranjang',
                         'data' => $cartSeries,
-                        'borderColor' => '#6B7280',
+                        'borderColor' => '#9A4D18',
                         'fill' => false,
                         'tension' => 0.25,
                     ],
@@ -407,7 +407,7 @@ class StoreMetricsService
         $trimmedSearch = trim($search);
         if ($trimmedSearch !== '') {
             $term = $this->escapedLikeTerm($trimmedSearch);
-            $query->whereRaw("lower(products.name) LIKE ? ESCAPE '\\'", [$term]);
+            $query->whereRaw("lower(products.name) LIKE ? ESCAPE '!'", [$term]);
         }
 
         if ($onlyActiveEvents) {
@@ -464,8 +464,8 @@ class StoreMetricsService
         if ($trimmedSearch !== '') {
             $term = $this->escapedLikeTerm($trimmedSearch);
             $query->where(function ($outer) use ($term) {
-                $outer->whereHas('product', fn ($q) => $q->whereRaw("lower(name) LIKE ? ESCAPE '\\'", [$term]))
-                    ->orWhereHas('user', fn ($q) => $q->whereRaw("lower(name) LIKE ? ESCAPE '\\'", [$term]));
+                $outer->whereHas('product', fn ($q) => $q->whereRaw("lower(name) LIKE ? ESCAPE '!'", [$term]))
+                    ->orWhereHas('user', fn ($q) => $q->whereRaw("lower(name) LIKE ? ESCAPE '!'", [$term]));
             });
         }
 
@@ -560,7 +560,7 @@ class StoreMetricsService
                         [
                             'label' => $seriesLabel,
                             'data' => $values,
-                            'borderColor' => '#111827',
+                            'borderColor' => '#33200F',
                             'fill' => true,
                             'tension' => 0.25,
                         ],
@@ -653,8 +653,8 @@ class StoreMetricsService
     private function escapedLikeTerm(string $keyword): string
     {
         $escaped = str_replace(
-            ['\\', '%', '_'],
-            ['\\\\', '\\%', '\\_'],
+            ['!', '%', '_'],
+            ['!!', '!%', '!_'],
             mb_strtolower($keyword),
         );
 

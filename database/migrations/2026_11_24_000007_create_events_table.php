@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -21,15 +20,11 @@ return new class extends Migration
             $table->timestamp('occurred_at');
             $table->timestamps();
 
+            $table->unique(['order_item_id', 'event_type']);
             $table->index(['event_type', 'occurred_at']);
             $table->index(['product_id', 'occurred_at']);
             $table->index(['user_id', 'product_id', 'occurred_at']);
-            $table->index('order_id');
         });
-
-        if (DB::getDriverName() === 'sqlite') {
-            DB::statement("CREATE UNIQUE INDEX IF NOT EXISTS events_order_item_lifecycle_unique ON events (order_item_id, event_type) WHERE order_item_id IS NOT NULL AND event_type IN ('booking', 'purchase', 'cancel')");
-        }
     }
 
     public function down(): void

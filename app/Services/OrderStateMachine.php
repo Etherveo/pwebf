@@ -12,10 +12,8 @@ use Illuminate\Validation\ValidationException;
 // with no data change. The caller owns the surrounding transaction;
 // this class never opens one of its own.
 //
-// M4 SIM-29: transition()/recordInitial()/writeHistory() accept an
-// optional ?Carbon $at. When null (the default) every stamp is now(),
-// exactly as before; when given, the stamps use $at, so a backdated
-// simulation run can place the transition inside its period.
+// transition()/recordInitial()/writeHistory() accept an optional ?Carbon $at
+// (defaults to now() when null) so timestamps remain explicit when passed.
 class OrderStateMachine
 {
     // Allowed transitions from each status (PRD §9.2). Final statuses

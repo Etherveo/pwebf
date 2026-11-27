@@ -7,18 +7,15 @@ use App\Models\Payment;
 use App\Payments\PaymentAdapter;
 use App\Payments\PaymentInstruction;
 use App\Payments\QrPayload;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 // M3a/M3b PAY-01/PAY-02/PAY-03/PAY-05/PAY-10. Creates the single
 // pending payment for an order and builds its instruction through
-// the payment adapter (M3b: the adapter dispatches to the internal
-// simulator gateway, which returns the QR URL). The payment_token is
-// 32 CSPRNG bytes, URL-safe base64 (43 chars), unique, bound to this
-// one payment. reference_code: QR methods get SIMQR- + 10 chars
-// (PAY-10); VA methods get a 16-digit dummy number 999 + bank code +
-// 11 random digits (PAY-08). qr_url is filled from the instruction
-// (APP_URL + /pay/sim/<token>, PAY-06).
+// the active PaymentAdapter. The payment_token is 32 CSPRNG bytes,
+// URL-safe base64 (43 chars), unique, bound to this one payment.
+// reference_code: QR methods get REF- + 10 chars; VA methods get
+// a 16-digit reference number. qr_url is filled from the instruction
+// when provided by the adapter.
 class PaymentService
 {
     public function __construct(
