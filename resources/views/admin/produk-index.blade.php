@@ -63,9 +63,9 @@
                                 <th>Nama</th>
                                 <th>Kategori</th>
                                 <th>Harga</th>
-                                <th>Stok fisik</th>
-                                <th>Dicadangkan</th>
-                                <th>Tersedia</th>
+                                <th class="admin-num-col">Stok fisik</th>
+                                <th class="admin-num-col">Dicadangkan</th>
+                                <th class="admin-num-col">Tersedia</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
                             </tr>
@@ -75,24 +75,31 @@
                             @php($habis = $product->stock_available <= 0)
                             <tr>
                                 <td data-label="Nama">
-                                    <span class="admin-cell-primary">{{ $product->name }}</span>
-                                    <div class="admin-cell-sub">
-                                        {{ $product->conditionLabel() }}
-                                        @if ($product->is_preorder)
-                                            &bull; Pre-Order
+                                    <div class="admin-product-cell">
+                                        @if ($product->hasImage())
+                                            <img class="admin-product-thumb" src="{{ $product->imageUrl() }}" alt="">
                                         @endif
-                                        @if ($product->is_featured)
-                                            &bull; Unggulan
-                                        @endif
+                                        <div class="admin-product-meta">
+                                            <span class="admin-cell-primary">{{ $product->name }}</span>
+                                            <div class="admin-cell-sub">
+                                                {{ $product->conditionLabel() }}
+                                                @if ($product->is_preorder)
+                                                    &bull; Pre-Order
+                                                @endif
+                                                @if ($product->is_featured)
+                                                    &bull; Unggulan
+                                                @endif
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
                                 <td data-label="Kategori">{{ $product->category?->name }}</td>
                                 <td data-label="Harga">
                                     <span class="admin-cell-price">{{ $product->formattedPrice() }}</span>
                                 </td>
-                                <td data-label="Stok fisik">{{ $product->stock_on_hand }}</td>
-                                <td data-label="Dicadangkan">{{ $product->stock_reserved }}</td>
-                                <td data-label="Tersedia">
+                                <td data-label="Stok fisik" class="admin-num-col">{{ $product->stock_on_hand }}</td>
+                                <td data-label="Dicadangkan" class="admin-num-col">{{ $product->stock_reserved }}</td>
+                                <td data-label="Tersedia" class="admin-num-col">
                                     @if ($habis)
                                         <span class="status-chip status-chip-warning">
                                             <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
@@ -116,7 +123,7 @@
                                     @endif
                                 </td>
                                 <td data-label="Aksi">
-                                    <div class="admin-row-actions">
+                                    <div class="admin-row-actions admin-row-actions-grid">
                                         <a class="admin-action-link" href="{{ route('admin.produk.edit', $product) }}">Ubah</a>
                                         <a class="admin-action-link" href="{{ route('admin.produk.stok', $product) }}">Atur stok</a>
                                         <a class="admin-action-link" href="{{ route('admin.produk.riwayat', $product) }}">Riwayat stok</a>

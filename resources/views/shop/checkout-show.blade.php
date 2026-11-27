@@ -24,11 +24,13 @@
 
         <ol class="buyer-step-bar" aria-label="Tahapan pembelian">
             <li class="buyer-step-item is-done">1 Keranjang</li>
+            <li class="buyer-step-sep" aria-hidden="true">&rarr;</li>
             <li class="buyer-step-item is-current" aria-current="step">2 Pembayaran</li>
+            <li class="buyer-step-sep" aria-hidden="true">&rarr;</li>
             <li class="buyer-step-item">3 Hasil</li>
         </ol>
 
-        <form method="POST" action="{{ route('checkout.store') }}" class="buyer-checkout-form" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
+        <form method="POST" action="{{ route('checkout.store') }}" class="buyer-checkout-form" data-checkout-form data-subtotal-idr="{{ $total_idr }}" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
             @csrf
             <input type="hidden" name="checkout_key" value="{{ $checkout_key }}">
 
@@ -85,7 +87,7 @@
                             </div>
                         </fieldset>
 
-                        <div id="box-pickup" @if ($selectedFulfillment === 'delivery') hidden @endif>
+                        <div id="box-pickup" class="checkout-subpanel" @if ($selectedFulfillment === 'delivery') hidden @endif>
                             <h3 class="admin-section-title">Jadwal pengambilan</h3>
                             <p class="admin-hint">Pesanan diambil di toko {{ config('store.name') }}. Pilih tanggal dan jam pengambilan.</p>
                             <div class="admin-field-grid">
@@ -105,14 +107,14 @@
                             </div>
                         </div>
 
-                        <div id="box-delivery" @if ($selectedFulfillment !== 'delivery') hidden @endif>
+                        <div id="box-delivery" class="checkout-subpanel" @if ($selectedFulfillment !== 'delivery') hidden @endif>
                             <h3 class="admin-section-title">Detail pengiriman ekspedisi</h3>
                             <div class="admin-form">
                                 <div class="admin-field">
                                     <label for="courier_code" class="admin-label">Pilih ekspedisi</label>
                                     <select class="input" id="courier_code" name="courier_code">
                                         @foreach ($couriers as $cKey => $courier)
-                                            <option value="{{ $cKey }}" @selected(old('courier_code') === $cKey)>
+                                            <option value="{{ $cKey }}" data-cost="{{ (int) $courier['cost_idr'] }}" data-label="{{ $courier['name'] }}" @selected(old('courier_code') === $cKey)>
                                                 {{ $courier['name'] }} &mdash; Rp {{ number_format((int) $courier['cost_idr'], 0, ',', '.') }}
                                             </option>
                                         @endforeach
@@ -156,7 +158,7 @@
                             </div>
                         </div>
 
-                        <div class="admin-field">
+                        <div class="admin-field checkout-subpanel">
                             <label for="buyer_note" class="admin-label">Catatan pesanan (opsional)</label>
                             <input class="input" id="buyer_note" name="buyer_note" maxlength="500" value="{{ old('buyer_note') }}" placeholder="Catatan tambahan untuk penjual">
                             @error('buyer_note')<p class="alert-error field-error">{{ $message }}</p>@enderror
@@ -190,11 +192,15 @@
                                 <strong>{{ 'Rp '.number_format($item->subtotalIdr(), 0, ',', '.') }}</strong>
                             </li>
                         @endforeach
+                        <li id="summary-shipping-row" hidden>
+                            <span id="summary-shipping-label">Pengambilan di toko</span>
+                            <strong id="summary-shipping-cost">Rp 0</strong>
+                        </li>
                     </ul>
-                    <p class="admin-hint">Jika memilih pengiriman ekspedisi, ongkos kirim kurir akan ditambahkan otomatis pada total tagihan pesanan.</p>
+                    <p class="admin-hint" id="summary-shipping-note">Jika memilih pengiriman ekspedisi, ongkos kirim kurir akan ditambahkan otomatis pada total tagihan pesanan.</p>
                     <p class="buyer-total-line">
-                        <span>Subtotal Barang:</span>
-                        <strong>{{ 'Rp '.number_format($total_idr, 0, ',', '.') }}</strong>
+                        <span id="summary-total-label">Subtotal Barang:</span>
+                        <strong id="summary-total-value">{{ 'Rp '.number_format($total_idr, 0, ',', '.') }}</strong>
                     </p>
                     <button class="btn-primary buyer-cta-block" type="submit">Buat Pesanan</button>
                     <a class="btn-secondary buyer-cta-block" href="{{ route('keranjang.index') }}">Kembali ke keranjang</a>

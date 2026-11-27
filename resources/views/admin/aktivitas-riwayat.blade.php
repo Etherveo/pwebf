@@ -48,7 +48,7 @@
                 </div>
             </div>
 
-            <div class="analytics-filter-top">
+            <div class="analytics-filter-top analytics-toolbar-groups">
                 <div class="analytics-sort-pills" role="group" aria-label="Filter jenis aktivitas">
                     <span class="admin-label">Jenis:</span>
                     <a

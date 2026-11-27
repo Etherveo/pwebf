@@ -8,6 +8,7 @@
         <header class="admin-head">
             <div>
                 <p class="admin-eyebrow">{{ config('store.name') }} &bull; Pembayaran</p>
+                <p class="admin-title">Hasil Transaksi</p>
                 <p class="admin-subtitle">Status hasil transaksi pembayaran pesananmu.</p>
             </div>
         </header>

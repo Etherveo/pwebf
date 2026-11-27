@@ -38,7 +38,8 @@
 
     <div class="admin-sidebar-backdrop" data-admin-drawer-close hidden></div>
 
-    <aside class="admin-sidebar no-print" id="admin-sidebar" aria-label="Navigasi Admin">
+    <div class="admin-shell">
+        <aside class="admin-sidebar no-print" id="admin-sidebar" aria-label="Navigasi Admin">
         <div class="admin-sidebar-head">
             <div class="admin-brand">
                 <span class="admin-brand-mark" aria-hidden="true">{{ $storeMark }}</span>
@@ -47,7 +48,9 @@
                     <span>Admin Toko</span>
                 </div>
             </div>
-            <button type="button" class="admin-drawer-close" data-admin-drawer-close aria-label="Tutup menu navigasi">×</button>
+            <button type="button" class="admin-drawer-close" data-admin-drawer-close aria-label="Tutup menu navigasi">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
         </div>
 
         <nav class="admin-sidebar-nav" aria-label="Menu Admin">
@@ -111,30 +114,35 @@
             </form>
         </div>
     </aside>
+    <div class="admin-workspace">
 @else
-    <header class="no-print">
-        <a class="topbar-brand" href="{{ route('home') }}">
-            <span class="topbar-brand-mark" aria-hidden="true">{{ $storeMark }}</span>
-            <strong>{{ $storeBrand }}</strong>
-        </a>
-        <button type="button" class="topbar-hamburger" data-topbar-menu-open aria-expanded="false" aria-controls="topbar-nav" aria-label="Buka menu navigasi">☰</button>
-        <nav id="topbar-nav" aria-label="Menu utama">
-            <a href="{{ route('katalog') }}" @if (request()->routeIs('katalog', 'katalog.*', 'produk.*')) aria-current="page" @endif>Katalog</a>
-            @auth('web')
-                <a href="{{ route('keranjang.index') }}" @if (request()->routeIs('keranjang.*')) aria-current="page" @endif>Keranjang{{ ($cartItemCount ?? 0) > 0 ? " ($cartItemCount)" : '' }}</a>
-                <a href="{{ route('pesanan.index') }}" @if (request()->routeIs('pesanan.*')) aria-current="page" @endif>Pesanan</a>
-                <a href="{{ route('pembayaran.index') }}" @if (request()->routeIs('pembayaran.*')) aria-current="page" @endif>Pembayaran</a>
-                <a href="{{ route('profil.show') }}" @if (request()->routeIs('profil.*')) aria-current="page" @endif>Profil</a>
-                <form method="POST" action="{{ route('keluar') }}" style="display:inline">
-                    @csrf
-                    <button type="submit">Keluar</button>
-                </form>
-            @endauth
-            @guest('web')
-                <a href="{{ route('masuk') }}" @if (request()->routeIs('masuk')) aria-current="page" @endif>Masuk</a>
-                <a href="{{ route('daftar') }}" @if (request()->routeIs('daftar')) aria-current="page" @endif>Daftar Pembeli</a>
-            @endguest
-        </nav>
+    <header class="topbar no-print">
+        <div class="topbar-inner">
+            <a class="topbar-brand" href="{{ route('home') }}">
+                <span class="topbar-brand-mark" aria-hidden="true">{{ $storeMark }}</span>
+                <strong>{{ $storeBrand }}</strong>
+            </a>
+            <button type="button" class="topbar-hamburger" data-topbar-menu-open aria-expanded="false" aria-controls="topbar-nav" aria-label="Buka menu navigasi">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </button>
+            <nav id="topbar-nav" aria-label="Menu utama">
+                <a href="{{ route('katalog') }}" @if (request()->routeIs('katalog', 'katalog.*', 'produk.*')) aria-current="page" @endif>Katalog</a>
+                @auth('web')
+                    <a href="{{ route('keranjang.index') }}" @class(['topbar-cart-link' => ($cartItemCount ?? 0) > 0]) @if (request()->routeIs('keranjang.*')) aria-current="page" @endif>Keranjang{{ ($cartItemCount ?? 0) > 0 ? " ($cartItemCount)" : '' }}</a>
+                    <a href="{{ route('pesanan.index') }}" @if (request()->routeIs('pesanan.*')) aria-current="page" @endif>Pesanan</a>
+                    <a href="{{ route('pembayaran.index') }}" @if (request()->routeIs('pembayaran.*')) aria-current="page" @endif>Pembayaran</a>
+                    <a href="{{ route('profil.show') }}" @if (request()->routeIs('profil.*')) aria-current="page" @endif>Profil</a>
+                    <form method="POST" action="{{ route('keluar') }}" class="topbar-logout-form">
+                        @csrf
+                        <button type="submit" class="topbar-logout">Keluar</button>
+                    </form>
+                @endauth
+                @guest('web')
+                    <a href="{{ route('masuk') }}" class="topbar-btn-secondary" @if (request()->routeIs('masuk')) aria-current="page" @endif>Masuk</a>
+                    <a href="{{ route('daftar') }}" class="topbar-cta" @if (request()->routeIs('daftar')) aria-current="page" @endif>Daftar Pembeli</a>
+                @endguest
+            </nav>
+        </div>
     </header>
     <div class="topbar-backdrop" data-topbar-menu-close hidden></div>
 @endif
@@ -151,13 +159,23 @@
     @endif
     @yield('content')
 </main>
-<footer class="no-print">
-    <small>
-        {{ $storeBrand }}{{ $storeLocation ? ' • '.$storeLocation : '' }} &bull; {{ $storeTzLabel }} (Asia/Makassar)
-        @foreach (config('store.socials', []) as $social)
-            &bull; <a href="{{ $social['url'] }}" target="_blank" rel="noopener" style="color: inherit;">{{ $social['platform'] }} {{ $social['handle'] }}</a>
-        @endforeach
-    </small>
+<footer class="site-footer no-print">
+    <div class="site-footer-inner site-footer-row">
+        <p class="site-footer-meta">
+            <strong>{{ $storeBrand }}</strong>{{ $storeLocation ? ' • '.$storeLocation : '' }} &bull; {{ $storeTzLabel }} (Asia/Makassar)
+        </p>
+        @if (! empty(config('store.socials', [])))
+            <div class="site-footer-links" aria-label="Media sosial resmi">
+                @foreach (config('store.socials', []) as $social)
+                    <a class="site-footer-link" href="{{ $social['url'] }}" target="_blank" rel="noopener">{{ $social['platform'] }} {{ $social['handle'] }}</a>
+                @endforeach
+            </div>
+        @endif
+    </div>
 </footer>
+@if ($isAdminShell)
+    </div>
+</div>
+@endif
 </body>
 </html>

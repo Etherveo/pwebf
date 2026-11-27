@@ -32,7 +32,7 @@
                             <tr>
                                 <th>Nama</th>
                                 <th>Slug</th>
-                                <th>Jumlah produk</th>
+                                <th class="admin-num-col">Jumlah produk</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -45,7 +45,7 @@
                                 <td data-label="Slug">
                                     <code class="admin-code">{{ $category->slug }}</code>
                                 </td>
-                                <td data-label="Jumlah produk">
+                                <td data-label="Jumlah produk" class="admin-num-col">
                                     <span class="admin-count-badge">{{ $category->products_count }}</span>
                                 </td>
                                 <td data-label="Aksi">

@@ -99,7 +99,7 @@
                 </div>
             </div>
 
-            <div class="analytics-filter-top">
+            <div class="analytics-filter-top analytics-toolbar-groups">
                 <div class="analytics-sort-pills" role="group" aria-label="Urutkan produk funnel">
                     <span class="admin-label">Urutkan:</span>
                     @foreach ($funnelSorts as $sortKey => $sortLabel)
@@ -147,11 +147,11 @@
                         <thead>
                             <tr>
                                 <th>Produk</th>
-                                <th>Dilihat</th>
-                                <th>Keranjang</th>
-                                <th>Booking</th>
-                                <th>Dibayar</th>
-                                <th>Batal</th>
+                                <th class="admin-num-col">Dilihat</th>
+                                <th class="admin-num-col">Keranjang</th>
+                                <th class="admin-num-col">Booking</th>
+                                <th class="admin-num-col">Dibayar</th>
+                                <th class="admin-num-col">Batal</th>
                                 <th>Konversi</th>
                             </tr>
                         </thead>
@@ -163,11 +163,11 @@
                                     <a class="admin-cell-link" href="{{ route('admin.aktivitas.riwayat', ['produk' => $row->id]) }}">{{ $row->name }}</a>
                                     <div class="admin-cell-sub">{{ $row->category_name }}</div>
                                 </td>
-                                <td data-label="Dilihat">{{ number_format((int) $row->views_count) }}</td>
-                                <td data-label="Keranjang">{{ number_format((int) $row->cart_count) }}</td>
-                                <td data-label="Booking">{{ number_format((int) $row->booking_count) }}</td>
-                                <td data-label="Dibayar">{{ number_format((int) $row->purchase_events_count) }}</td>
-                                <td data-label="Batal">{{ number_format((int) $row->cancel_count) }}</td>
+                                <td data-label="Dilihat" class="admin-num-col">{{ number_format((int) $row->views_count) }}</td>
+                                <td data-label="Keranjang" class="admin-num-col">{{ number_format((int) $row->cart_count) }}</td>
+                                <td data-label="Booking" class="admin-num-col">{{ number_format((int) $row->booking_count) }}</td>
+                                <td data-label="Dibayar" class="admin-num-col">{{ number_format((int) $row->purchase_events_count) }}</td>
+                                <td data-label="Batal" class="admin-num-col">{{ number_format((int) $row->cancel_count) }}</td>
                                 <td data-label="Konversi">
                                     <div class="analytics-table-bar-cell">
                                         <span class="analytics-inline-bar" aria-hidden="true">

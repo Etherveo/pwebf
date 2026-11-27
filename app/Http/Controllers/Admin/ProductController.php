@@ -59,7 +59,7 @@ class ProductController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('product-photos', 'local');
+            $data['image_path'] = $request->file('image')->store('products', 'public');
         }
 
         $product = $this->catalog->createProduct($data, $actor);
@@ -81,7 +81,7 @@ class ProductController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('product-photos', 'local');
+            $data['image_path'] = $request->file('image')->store('products', 'public');
         }
 
         $product = $this->catalog->updateProduct(Product::findOrFail($produk), $data);

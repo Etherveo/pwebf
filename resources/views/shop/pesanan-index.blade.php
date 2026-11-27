@@ -59,6 +59,7 @@
                                 <th>Tanggal (WITA)</th>
                                 <th>Total</th>
                                 <th>Status</th>
+                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -75,6 +76,9 @@
                                     <span class="status-chip {{ $statusChips[$order->status] ?? 'status-chip-muted' }}">
                                         <span>{{ $order->statusLabel() }}</span>
                                     </span>
+                                </td>
+                                <td data-label="Aksi">
+                                    <a class="admin-action-link" href="{{ route('pesanan.show', $order) }}">Detail</a>
                                 </td>
                             </tr>
                         @endforeach

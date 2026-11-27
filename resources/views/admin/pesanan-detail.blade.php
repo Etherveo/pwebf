@@ -141,22 +141,38 @@
                     <div class="admin-stack">
                         @foreach ($order->payments as $payment)
                             <div class="admin-subcard">
-                                <p class="admin-subcard-head">
-                                    <span>Metode: <strong>{{ config('payment.methods.'.$payment->payment_method.'.label', $payment->payment_method) }}</strong></span>
-                                    <span>&mdash; Status: <strong>{{ $payment->statusLabel() }}</strong></span>
-                                    <span>&mdash; Nominal: <strong>{{ $payment->formattedAmount() }}</strong></span>
-                                    <span>&mdash; Referensi: <code class="admin-code">{{ $payment->reference_code }}</code></span>
+                                <div class="buyer-payment-head">
+                                    <strong class="admin-cell-primary">{{ config('payment.methods.'.$payment->payment_method.'.label', $payment->payment_method) }}</strong>
+                                    <span class="status-chip {{ $statusChips[$order->status] ?? 'status-chip-muted' }}">
+                                        <span>{{ $payment->statusLabel() }}</span>
+                                    </span>
+                                </div>
+                                <dl class="buyer-payment-meta">
+                                    <div>
+                                        <dt>Nominal</dt>
+                                        <dd class="admin-cell-price">{{ $payment->formattedAmount() }}</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Referensi</dt>
+                                        <dd><code class="admin-code">{{ $payment->reference_code }}</code></dd>
+                                    </div>
+                                    <div>
+                                        <dt>Bukti bayar</dt>
+                                        <dd>{{ $payment->hasProof() ? 'Sudah diunggah' : 'Belum ada' }}</dd>
+                                    </div>
+                                </dl>
+                                <div class="admin-row-actions">
                                     @if ($payment->hasProof())
-                                        <span>&mdash; <a class="admin-action-link" href="{{ route('admin.pembayaran.bukti.show', $payment) }}" target="_blank" rel="noopener">Lihat bukti bayar</a></span>
+                                        <a class="admin-action-link" href="{{ route('admin.pembayaran.bukti.show', $payment) }}" target="_blank" rel="noopener">Lihat bukti bayar</a>
                                     @endif
-                                    <span>&mdash; <a class="admin-action-link" href="{{ route('admin.pembayaran.show', $payment) }}">Detail pembayaran</a></span>
-                                </p>
-                                @if ($payment->status === 'pending' && $order->status === 'menunggu_pembayaran')
-                                    <form method="POST" action="{{ route('admin.pesanan.konfirmasi-bayar', $order) }}" style="margin-top: 0.5rem;">
-                                        @csrf
-                                        <button class="btn-primary" type="submit">Konfirmasi Pembayaran</button>
-                                    </form>
-                                @endif
+                                    <a class="admin-action-link" href="{{ route('admin.pembayaran.show', $payment) }}">Detail pembayaran</a>
+                                    @if ($payment->status === 'pending' && $order->status === 'menunggu_pembayaran')
+                                        <form method="POST" action="{{ route('admin.pesanan.konfirmasi-bayar', $order) }}" class="admin-inline-form">
+                                            @csrf
+                                            <button class="btn-primary" type="submit">Konfirmasi Pembayaran</button>
+                                        </form>
+                                    @endif
+                                </div>
                                 @if ($payment->transitions->isNotEmpty())
                                     <ul class="admin-timeline">
                                     @foreach ($payment->transitions->sortBy('occurred_at') as $transition)

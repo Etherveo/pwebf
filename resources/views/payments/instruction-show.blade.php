@@ -31,13 +31,13 @@
             </div>
         </header>
 
-        <div class="buyer-split-layout">
+        <div class="buyer-split-layout pay-instruction-split">
             <div class="buyer-main-stack">
                 <div class="card admin-panel">
                     <div class="pay-method-banner">
                         <div>
                             <p class="admin-eyebrow">Metode Pembayaran</p>
-                            <h2 class="admin-section-title" style="margin:0">{{ $method['label'] ?? $payment->payment_method }}</h2>
+                            <h2 class="admin-section-title pay-section-heading">{{ $method['label'] ?? $payment->payment_method }}</h2>
                         </div>
                     </div>
 
@@ -91,9 +91,12 @@
                         <div class="admin-subcard">
                             <h3 class="pay-sub-heading">Rekening Transfer Toko</h3>
                             @foreach ($bankAccounts as $acc)
-                                <p style="margin: 0.25rem 0;">
-                                    <strong>{{ $acc['bank'] }}</strong>: <code class="admin-code">{{ $acc['number'] }}</code> a.n. {{ $acc['holder'] }}
-                                </p>
+                                <div class="pay-bank-row">
+                                    <p class="pay-bank-info">
+                                        <strong>{{ $acc['bank'] }}</strong>: <code class="admin-code">{{ $acc['number'] }}</code> a.n. {{ $acc['holder'] }}
+                                    </p>
+                                    <button type="button" class="btn-ghost-sm" data-copy-text="{{ $acc['number'] }}" data-copy-label="Salin">Salin</button>
+                                </div>
                             @endforeach
                         </div>
                     @endif
@@ -108,8 +111,6 @@
                         @if ($waUrl)
                             <a class="btn-secondary buyer-cta-block" href="{{ $waUrl }}" target="_blank" rel="noopener">Hubungi Penjual via WhatsApp</a>
                         @endif
-
-                        <a class="btn-secondary buyer-cta-block" href="{{ route('pesanan.show', $order) }}">Kembali ke detail pesanan</a>
                     </div>
 
                     @if ($payment->qr_url && $isLoopback)

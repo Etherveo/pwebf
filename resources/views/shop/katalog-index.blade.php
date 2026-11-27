@@ -31,7 +31,7 @@
             </div>
             @error('q')<p class="field-error" id="q-error">{{ $message }}</p>@enderror
 
-            <div class="admin-filters" style="margin-top: 0.75rem;">
+            <div class="shop-filter-grid">
                 <div class="admin-filter-group">
                     <label for="filter-kondisi" class="admin-label">Kondisi</label>
                     <select class="input" id="filter-kondisi" name="kondisi">
@@ -71,7 +71,7 @@
                 <div class="admin-filter-actions">
                     <button class="btn-secondary" type="submit">Terapkan Filter</button>
                     @if ($filterAktif)
-                        <a class="shop-clear" href="{{ route('katalog') }}">Bersihkan pencarian</a>
+                        <a class="btn-secondary" href="{{ route('katalog') }}">Bersihkan pencarian</a>
                     @endif
                 </div>
             </div>
@@ -98,8 +98,13 @@
             </nav>
 
             <section aria-label="Daftar produk">
-                @if (request()->filled('q'))
-                    <p class="shop-result-note">Hasil pencarian untuk: {{ request('q') }}</p>
+                @if ($products->isNotEmpty() || request()->filled('q'))
+                    <p class="shop-result-note">
+                        @if (request()->filled('q'))
+                            Hasil pencarian untuk: <strong>{{ request('q') }}</strong> &bull;
+                        @endif
+                        Menampilkan {{ number_format($products->total()) }} produk
+                    </p>
                 @endif
 
                 @if ($products->isEmpty())
@@ -107,7 +112,8 @@
                         <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         <p class="shop-empty-title">Tidak ada produk yang ditemukan.</p>
                         @if ($filterAktif)
-                            <p>Periksa ejaan atau coba kategori lain. <a href="{{ route('katalog') }}">Bersihkan pencarian</a> untuk melihat semua produk.</p>
+                            <p>Periksa ejaan atau coba kategori lain.</p>
+                            <p><a class="btn-secondary" href="{{ route('katalog') }}">Bersihkan pencarian</a></p>
                         @else
                             <p>Produk akan tampil di sini setelah ditambahkan oleh toko.</p>
                         @endif
@@ -116,19 +122,28 @@
                     <ul class="product-grid">
                         @foreach ($products as $product)
                             @php($habis = $product->stock_available <= 0)
-                            <li class="product-card">
+                            <li @class(['product-card', 'is-out' => $habis])>
                                 <a class="product-card-link" href="{{ route('produk.show', $product) }}">
                                     <div class="product-art" aria-hidden="true">
-                                        <span class="product-art-tag">
-                                            {{ $product->category?->name }}
-                                            @if ($product->is_preorder)
-                                                &bull; Pre-Order
-                                            @elseif ($product->condition === 'bekas')
-                                                &bull; Bekas
-                                            @endif
-                                        </span>
+                                        <span class="product-art-tag">{{ $product->category?->name }}</span>
+                                        @if ($product->is_featured || $product->is_preorder || $product->condition === 'bekas' || $habis)
+                                            <div class="product-art-badges">
+                                                @if ($product->is_featured)
+                                                    <span class="status-chip status-chip-success">Unggulan</span>
+                                                @endif
+                                                @if ($product->is_preorder)
+                                                    <span class="status-chip status-chip-warning">Pre-Order</span>
+                                                @endif
+                                                @if ($product->condition === 'bekas')
+                                                    <span class="status-chip status-chip-info">Bekas</span>
+                                                @endif
+                                                @if ($habis)
+                                                    <span class="status-chip status-chip-danger">Habis</span>
+                                                @endif
+                                            </div>
+                                        @endif
                                         @if ($product->hasImage())
-                                            <img src="{{ $product->imageUrl() }}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">
+                                            <img class="product-art-img" src="{{ $product->imageUrl() }}" alt="">
                                         @else
                                             <span class="product-art-tile">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></svg>

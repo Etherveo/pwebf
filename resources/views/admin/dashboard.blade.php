@@ -57,6 +57,7 @@
                     </span>
                 </div>
                 <span class="analytics-kpi-value">Rp {{ number_format($revenue, 0, ',', '.') }}</span>
+                <p class="analytics-note">Total omzet pesanan terbayar</p>
             </div>
 
             <div class="card analytics-kpi">
@@ -67,6 +68,7 @@
                     </span>
                 </div>
                 <span class="analytics-kpi-value">{{ number_format($paidOrders) }}</span>
+                <p class="analytics-note">Transaksi lunas terverifikasi</p>
             </div>
 
             <div class="card analytics-kpi">
@@ -77,6 +79,7 @@
                     </span>
                 </div>
                 <span class="analytics-kpi-value">{{ number_format($unitsSold) }}</span>
+                <p class="analytics-note">Akumulasi kuantitas produk</p>
             </div>
 
             <div class="card analytics-kpi">
@@ -216,6 +219,7 @@
                                 <th>Pembeli</th>
                                 <th>Total</th>
                                 <th>Status</th>
+                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -231,6 +235,9 @@
                                     <span class="status-chip {{ $statusChips[$order->status] ?? 'status-chip-muted' }}">
                                         <span>{{ $order->statusLabel() }}</span>
                                     </span>
+                                </td>
+                                <td data-label="Aksi">
+                                    <a class="admin-action-link" href="{{ route('admin.pesanan.show', $order) }}">Detail</a>
                                 </td>
                             </tr>
                         @endforeach

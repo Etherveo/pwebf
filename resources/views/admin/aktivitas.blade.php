@@ -66,7 +66,7 @@
                 </div>
             </div>
 
-            <div class="analytics-filter-top">
+            <div class="analytics-filter-top analytics-toolbar-groups">
                 <div class="analytics-sort-pills" role="group" aria-label="Urutkan counter produk">
                     <span class="admin-label">Urutkan:</span>
                     @foreach ($activitySorts as $sortKey => $sortLabel)
@@ -110,18 +110,18 @@
                 </div>
             @else
                 <div class="admin-table-wrap">
-                    <table class="admin-table">
+                    <table class="admin-table admin-table-dense">
                         <thead>
                             <tr>
                                 <th>Produk</th>
-                                <th>Dilihat</th>
-                                <th>Keranjang</th>
-                                <th>Booking</th>
-                                <th>Dibayar</th>
-                                <th>Batal</th>
-                                <th>Unit Terjual</th>
-                                <th>Omzet</th>
-                                <th>Konversi</th>
+                                <th class="admin-num-col">Dilihat</th>
+                                <th class="admin-num-col">Keranjang</th>
+                                <th class="admin-num-col">Booking</th>
+                                <th class="admin-num-col">Dibayar</th>
+                                <th class="admin-num-col">Batal</th>
+                                <th class="admin-num-col">Unit Terjual</th>
+                                <th class="admin-num-col">Omzet</th>
+                                <th class="admin-num-col">Konversi</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -132,14 +132,14 @@
                                     <span class="admin-cell-primary">{{ $row->name }}</span>
                                     <div class="admin-cell-sub">{{ $row->category_name }}</div>
                                 </td>
-                                <td data-label="Dilihat">{{ number_format((int) $row->views_count) }}</td>
-                                <td data-label="Keranjang">{{ number_format((int) $row->cart_count) }}</td>
-                                <td data-label="Booking">{{ number_format((int) $row->booking_count) }}</td>
-                                <td data-label="Dibayar">{{ number_format((int) $row->purchase_events_count) }}</td>
-                                <td data-label="Batal">{{ number_format((int) $row->cancel_count) }}</td>
-                                <td data-label="Unit Terjual">{{ number_format((int) $row->units_sold) }}</td>
-                                <td data-label="Omzet"><span class="admin-cell-price">Rp {{ number_format((int) $row->revenue_idr, 0, ',', '.') }}</span></td>
-                                <td data-label="Konversi">{{ number_format((float) $row->conversion_rate, 1) }}%</td>
+                                <td data-label="Dilihat" class="admin-num-col">{{ number_format((int) $row->views_count) }}</td>
+                                <td data-label="Keranjang" class="admin-num-col">{{ number_format((int) $row->cart_count) }}</td>
+                                <td data-label="Booking" class="admin-num-col">{{ number_format((int) $row->booking_count) }}</td>
+                                <td data-label="Dibayar" class="admin-num-col">{{ number_format((int) $row->purchase_events_count) }}</td>
+                                <td data-label="Batal" class="admin-num-col">{{ number_format((int) $row->cancel_count) }}</td>
+                                <td data-label="Unit Terjual" class="admin-num-col">{{ number_format((int) $row->units_sold) }}</td>
+                                <td data-label="Omzet" class="admin-num-col"><span class="admin-cell-price">Rp {{ number_format((int) $row->revenue_idr, 0, ',', '.') }}</span></td>
+                                <td data-label="Konversi" class="admin-num-col">{{ number_format((float) $row->conversion_rate, 1) }}%</td>
                                 <td data-label="Aksi">
                                     <a class="admin-action-link" href="{{ route('admin.aktivitas.riwayat', array_merge($tabParams, ['produk' => $row->id])) }}">Riwayat</a>
                                 </td>

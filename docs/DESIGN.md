@@ -1,473 +1,289 @@
-# DESIGN.md — UI/UX Agent Rules
+# DESIGN.md — Aturan UI/UX Proyek E-Commerce `Cloraamine` (Versi Diluruskan)
 
-Operating rules for AI design and frontend agents (Figma Make, Figma Design Agent, Google Stitch, Claude Code, Cursor, v0, Lovable, or any AGENTS.md-aware tool) that build a product interface from a **system spec** — entities, flows, roles, APIs — usually with little or no visual direction.
+> **Status Dokumen:** Versi `DESIGN.md` yang sudah diluruskan dari `DESIGN.md` v2 agar selaras 100% dengan codebase aktif **Cloraamine** (`resources/css/tokens.css`, `docs/ui-minimalist-spec.md`, `docs/roadmap-transformasi.md`, `config/store.php`) pada branch `feat/cloraamine-ecommerce`.
 
-> **Core principle:** Build the interface a real person would be glad to open. It does exactly what the system spec says, it is easy to use, and it looks polished and comfortable. Visual quality is part of the requirement, not decoration added afterwards. A familiar pattern done well beats an original pattern done awkwardly.
+---
 
-Apply every rule to every screen and state in the task, not only the first one.
+## Daftar Perubahan dari `DESIGN.md` Asli (v2)
 
-**Rule types** — `[HARD]` must hold (kept few on purpose). `[DEFAULT]` is the standard approach; deviate only when the brief, an existing design system or Appendix G says otherwise, and say so in one line. `[CHECK]` is verified before a screen is called done.
+Berikut ringkasan perubahan yang dibuat terhadap `DESIGN.md` (v2) asli beserta alasannya:
+
+1. **Menambahkan Bagian Authority Order & Penonaktifan Preset Biru (§4, §12):**
+   - Menetapkan urutan prioritas keputusan visual secara eksplisit: **(1)** `resources/css/tokens.css` + `docs/ui-minimalist-spec.md` → **(2)** instruksi eksplisit di task → **(3)** Appendix G → **(4)** defaults `DESIGN.md`.
+   - Menandai **Preset "Modern product" biru (`#2563EB`) di §4 dan starter token biru di Appendix C TIDAK dipakai** pada proyek ini karena bertentangan dengan palet resmi proyek (**Warm Cream & Deep Espresso**).
+2. **Mengisi Appendix G (Style Override) dengan Style Proyek yang Sudah Fix:**
+   - Mengisi seluruh parameter visual dari `tokens.css` & keputusan desain aktif: **Warm Cream & Deep Espresso** (`#FDF6EE` kanvas, `#FFFDF9` kartu, `#F6EBDD` inset/tombol sekunder, `#33200F` espresso untuk teks & navigasi sidebar aktif, `#9A4D18` karamel untuk tombol utama `.btn-primary` Opsi A + hover `#7C3C11`), font `Plus Jakarta Sans` / `Inter` / `JetBrains Mono`, radius `4px–12px` + pill, shadow hangat espresso, bahasa Indonesia, format `Rp 1.250.000` & tanggal Indonesia (`WITA`), serta **tema terang saja (light only)**.
+3. **Mengganti Appendix H (Stack Output Kode):**
+   - Menghapus default **React + TypeScript + Tailwind CSS + shadcn/ui + Lucide + Recharts** dan menggantinya dengan stack riil proyek ini: **Laravel Blade + Tailwind CSS v4 + CSS custom tokens (`tokens.css` & `app.css`) + Vite + Chart.js + `qrcode` + Pest**.
+   - Menghapus/menandai **tidak berlaku** instruksi untuk **Figma Make, Google Stitch, v0, dan Lovable** di pembuka file (hanya disimpan catatan bahwa rujukan eksternal tersebut tidak dipakai sebagai generator kode di repo ini).
+4. **Mengunci Scope & Domain Proyek (§2, §12, §13):**
+   - Menegaskan batas pekerjaan UI: **hanya meningkatkan halaman yang sudah ada**, dilarang meng-invent entitas, field, fitur, endpoint, peran, migrasi, atau skema database baru (`docs/database-baru.md`), serta dilarang mengubah alur jual-beli atau meng-hardcode nama toko (wajib dari `config/store.php`, default `Cloraamine`).
+   - Menegaskan proyek hanya memiliki **2 aktor** (`Pembeli` dan `Admin Toko`, tanpa `Developer` dan tanpa simulasi) serta **2 metode pemenuhan** (`Ambil di Toko` / pickup dan `Kirim via Ekspedisi` / kurir).
+5. **Menetapkan Dials Resmi Proyek (§3, §4, Appendix A):**
+   - **Admin (`admin_toko`):** **D7 / E3 / M2** (Density 7 · Expressiveness 3 · Motion 2).
+   - **Storefront e-commerce (`pembeli` & tamu):** **D5 / E5 / M4** (Density 5 · Expressiveness 5 · Motion 4).
+6. **Membersihkan Pengecualian & Contoh yang Tidak Relevan (§10, §13, Appendix A/C/D):**
+   - Menghapus pengecualian animasi `/intro` cinematic di §10 karena tidak ada halaman `/intro` di proyek ini (seluruh halaman wajib menghormati `prefers-reduced-motion`).
+   - Memperbarui contoh `Design Notes` di §13 agar merujuk ke token dan dial resmi `Cloraamine`, bukan `#0F766E` / slate generic.
+
+---
+
+## Cara Menggunakan File Ini
+
+- **Berlaku untuk repo ini (Laravel Blade):** Agen coding (`AGENTS.md` / `CLAUDE.md` / Cursor / Gemini) membaca file ini bersama `resources/css/tokens.css` dan `docs/ui-minimalist-spec.md`.
+- **Alat eksternal tidak berlaku:** Petunjuk khusus **Figma Make (`guidelines/Guidelines.md`)**, **Figma Design Agent Skill**, **Google Stitch**, **v0**, dan **Lovable** pada `DESIGN.md` v2 **tidak berlaku** di proyek ini (maksimal sebagai referensi konseptual umum saja, jangan pernah menghasilkan komponen React/shadcn atau instruksi tool tersebut).
+
+**Tipe aturan** — `[HARD]` wajib dipatuhi. `[DEFAULT]` adalah standar kerja; penyimpangan hanya boleh bila diinstruksikan secara eksplisit oleh task atau `tokens.css`/`ui-minimalist-spec.md`, dan harus dicatat satu baris. `[CHECK]` diverifikasi sebelum layar dinyatakan selesai.
 
 ---
 
 # PART 1 — CORE RULES
 
-*Part 1 stands on its own. If the appendices aren't available to you, treat references to them as optional: use the fallbacks given in the text (for example the Modern product preset in §4) and your own judgment.*
-
 ## 1. Priorities `[HARD]`
 
-Resolve conflicts top-down — a higher level always beats a lower one:
+Selesaikan konflik secara top-down — tingkat lebih tinggi selalu mengalahkan yang lebih rendah:
 
-1. **Spec fidelity** — the system design is the source of truth (§2). `[HARD]`
-2. **Usability and accessibility floor** (§8, §10). `[HARD]`
-3. **Visual quality** — hierarchy, polish, richness, comfort, consistency (§5–§7). Treat as near-mandatory: a screen that is correct but barren, cramped or text-only is unfinished.
-4. **Personality** — a recognizable character is welcome, never at the cost of 1–3.
-5. **Minimalism** — a style option, not a goal. Plain is not the same as clean; restraint only works when every detail is executed with care.
+1. **Kepatuhan spesifikasi sistem & kontrak codebase** — skema, rute, form, validasi, role, dan alur jual-beli yang sudah ada adalah sumber kebenaran mutlak (§2). `[HARD]`
+2. **Usability & batas minimum aksesibilitas** (§8, §10). `[HARD]`
+3. **Kualitas visual** — hierarki, kontras, kejelasan tombol aksi, kerapian tata letak, dan konsistensi (§5–§7). Tampilan yang benar secara fungsional tetapi terasa polos, tombolnya kabur, atau layoutnya timpang dianggap belum selesai.
+4. **Karakter merek** — nuansa hangat **Warm Cream & Deep Espresso** milik `Cloraamine`, tidak boleh mengorbankan poin 1–3.
+5. **Minimalisme terukur** — bersih bukan berarti kosong/polos; kesederhanaan hanya bekerja bila hierarki permukaan, batas section, dan affordance tombol dieksekusi dengan rapi.
 
-**Aesthetics are a sufficient reason.** Any visual treatment — gradient, shadow, glass, illustration, icon, rounded card, background texture, motion — is allowed when it makes the design look better or feel more comfortable and does not break levels 1–2. "It improves the look and fits the chosen style" is a complete justification; beauty does not need a functional excuse. Don't strip a design down to make it look "intentional".
+## 2. Spec & Scope Fidelity `[HARD]`
 
-**What "AI slop" means here.** Slop is carelessness, not a pattern: the wrong product type (a landing page for a dashboard), lorem ipsum, colors that don't fit the domain, missing states, inconsistent radius and spacing, decoration unrelated to the content. Looking like other AI output is not a defect. Fix slop with specificity and consistency — real domain content, tokens, a deliberate palette, every state designed — never by deleting visual richness. Banning one default look tends to push a model into a different fixed look, so choose a look on purpose (§4).
+Codebase aktif (`routes/web.php`, Controller, FormRequest, Model, `config/store.php`, dan `docs/database-baru.md`) menentukan seluruh perilaku sistem. Lapisan UI tidak boleh membengkokkan atau menambah fungsi di luar itu:
 
-## 2. Spec fidelity `[HARD]`
+- **Scope ketat proyek ini:**
+  - **Hanya tingkatkan UI pada halaman-halaman yang sudah ada.**
+  - **Jangan invent** entitas, field form baru, endpoint baru, permission baru, migrasi, atau perubahan skema database.
+  - **Jangan ubah alur jual-beli**, logika stok/checkout/pembayaran, atau mengganti sumber nama toko (`config('store.name')` / `config('store.*')`, default `Cloraamine`).
+  - **Aktor hanya 2:** `Pembeli` dan `Admin Toko` (guard `web`). Tidak ada aktor `Developer`, tidak ada panel simulasi, tidak ada badge/banner simulasi.
+  - **Metode pemenuhan hanya 2:** `Ambil di Toko` (`pickup_at`, `picked_up_at`) dan `Kirim via Ekspedisi` (kurir `JNE`/`J&T`/`SiCepat`, ongkir, alamat, nomor resi).
+- Setiap field wajib, batas validasi (min, max, format), pesan error inline (`aria-describedby`), nilai enum/status, dan hak akses per role harus tetap tampil dan bekerja sesuai implementasi saat ini.
+- Gunakan kosakata domain yang sudah ada apa adanya dalam bahasa Indonesia (`Keranjang`, `Checkout`, `Ambil di Toko`, `Kirim via Ekspedisi`, `Pre-Order`, `Bekas`, `Unggulan`, `Funnel Pembelian`, `Aktivitas Produk`).
+- Yang bebas dan wajib ditingkatkan oleh UI adalah **presentasi**: tata letak grid/kolom, pengelompokan kartu, kejelasan tombol & aksi baris, ikon SVG konsisten, tipografi, hierarki permukaan, responsivitas (`390px`, `768px`, `1280px`), dan microcopy penjelas yang tidak mengubah kontrak data.
 
-The backend or system design defines what the product does. The visual layer can be as rich as it likes, but it must not break or bend that.
+## 3. Understand Before You Draw `[DEFAULT]`
 
-- Every entity, field, action, role, state and rule in the spec is reachable and visible in the UI. Required fields are marked; validation limits (min, max, pattern, uniqueness) show as inline messages; every enum value has a designed appearance; each role sees and can do only what the spec allows (hide or disable — and say which).
-- Use the spec's domain vocabulary verbatim. Don't rename concepts.
-- Don't invent entities, fields, endpoints, permissions or business rules. If the UI needs something the spec doesn't define (search, pagination, bulk actions, export), design it, mark it *assumed*, and list it under **Backend needs** in the Design Notes so the engineer can decide.
-- Add the standard screens real systems need but specs usually omit — sign-in, profile, settings, 403/404/500, loading/empty/error states, confirmations for destructive actions, toasts — and flag them *added (not in spec)*.
-- Presentation is yours to decide: labels, grouping, icons, layout, microcopy, sample data, charts, polish. Adding presentation is never scope creep; adding functionality is.
+Sebelum mengubah tampilan, tetapkan hal berikut:
 
-## 3. Understand before you draw `[DEFAULT]`
+1. **Produk & pengguna:** Toko e-commerce merchandise & cetak custom (`Cloraamine`) dengan 2 permukaan: **Storefront** (pengunjung & pembeli di ponsel/desktop) dan **Panel Admin Toko** (pengelola toko di desktop/tablet/mobile).
+2. **Register:**
+   - **Storefront** = *Product (E-Commerce)* dengan sentuhan *Editorial/Warm* di hero beranda (`/`) tanpa mengubahnya menjadi landing page pemasaran penuh klaim fiktif.
+   - **Admin Toko** = *Product (Back-Office & Analytics)*.
+3. **Prioritas informasi per layar:** Pastikan judul halaman + status/aksi utama terbaca pertama, kontrol filter terkelompok rapi kedua, dan daftar produk / tabel / ringkasan checkout dominan dan nyaman dipindai.
+4. **Model navigasi yang berlaku:**
+   - Storefront: Topbar sticky full-width (`Katalog`, plus `Keranjang`, `Pesanan`, `Pembayaran`, `Profil`, `Keluar` saat login pembeli; `Masuk` dan `Daftar Pembeli` saat tamu) + drawer menu di mobile `< 768px`.
+   - Admin Toko: CSS Grid `.admin-shell` dengan sidebar kiri sticky penuh di desktop (`>= 1024px`) tanpa topbar duplikat + drawer di mobile `< 1024px`.
+5. **Style & token:** Ikuti `resources/css/tokens.css`, `docs/ui-minimalist-spec.md`, dan Appendix G di bawah secara mutlak.
+6. **Komponen yang digunakan ulang:** Manfaatkan class dan partial yang sudah ada (`tokens.css`, `app.css`, `_period-filter.blade.php`, `_pickup-instruction.blade.php`, `vendor/pagination/tailwind.blade.php`) sebelum menambah class baru.
 
-Before the first frame, settle these. Write the answers as 5–8 short lines; they become the Design Notes (§13).
+## 4. Style & Dials Resmi Proyek `[DEFAULT]`
 
-1. **Product and users** — what it is, who uses it, on which device, in what situation (office desk, phone in bright light, shared kiosk), and how expert they are.
-2. **Register** — *Product* (apps, dashboards, admin, forms, tools: design serves the task) or *Brand* (landing, marketing, portfolio: design is the message). A system spec almost always means Product. A landing page requested inside a product project is Brand for that page only.
-3. **Primary task per screen** and the information priority: what the user must see first, second, third.
-4. **Screen inventory and navigation model**, derived from the spec (§2, Appendix B).
-5. **Style** — given by the brief or an existing system? Follow it exactly. Not given? Decide one on purpose (§4).
-6. **What can be reused** — existing components and tokens before new ones.
+Proyek ini **sudah memiliki sistem gaya tetap** — **jangan** melakukan inferensi ulang atau memakai preset biru generic.
 
-If the brief doesn't answer these, assume, state the assumption in one line, and proceed. Don't block on questions; don't guess silently.
+> **Penegasan:** **Preset "Modern product" biru di `DESIGN.md` v2 TIDAK dipakai pada proyek ini.**
 
-## 4. No style given? Decide one on purpose `[DEFAULT]`
+**Dials Resmi Cloraamine:**
 
-Most briefs describe the system and say nothing about looks. That is permission to design, not to fall back on a default. Without a decision, a model drifts toward whichever look it has seen most; with one, the result is cohesive and easy to re-skin.
+| Permukaan | Archetype Acuan | Density (D) | Expressiveness (E) | Motion (M) |
+| --- | --- | :---: | :---: | :---: |
+| **Admin Toko** (`/admin/*`) | Admin / back-office + Analytics SaaS | **7** | **3** | **2** |
+| **Storefront E-Commerce** (`/`, `/katalog`, `/produk/*`, alur pembeli & auth) | E-commerce / catalog hangat | **5** | **5** | **4** |
 
-**Register defaults**
+- **Admin (D7 / E3 / M2):** Padat-terstruktur untuk tabel operasional, filter analitik, dan form CRUD; visual tenang dengan penekanan jelas pada tombol aksi utama vs tombol baris tabel; gerak hanya umpan balik interaksi (`150ms`).
+- **Storefront (D5 / E5 / M4):** Seimbang dan lapang agar foto/kartu produk menonjol di atas kanvas `#FDF6EE`; kartu produk ber-hover halus, hero editorial espresso `#33200F`, aksen karamel `#9A4D18` pada CTA, serta alur keranjang/checkout/pembayaran yang jelas langkahnya.
 
-| | Product (apps, tools, dashboards) | Brand (landing, campaign, portfolio) |
-|---|---|---|
-| Role of design | Serves the task: speed, clarity, trust | Is the message: first impression, emotion |
-| Structure | Conventional skeletons (sidebar or top bar, tables, forms) — users prefer what they already know | Free to be editorial or expressive |
-| Density | Medium to high; no hero banners inside the app | Medium to airy |
-| Type | One versatile sans, strong numerals | A display face is allowed for character |
-| Color | Calm canvas + one brand accent + semantic colors | Bolder palette, gradients, imagery |
-| Motion | Feedback (hover, press, expand, toast) | Feedback plus one entrance moment |
+## 5. Layout, Density and Whitespace `[DEFAULT]`
 
-**Steps**
+- **Proximity:** jarak di dalam kelompok (`8–16px`) < antar kelompok (`20–28px`) < antar section (`32–48px`).
+- **Page & card padding:** gunakan padding container yang proporsional (`16px` mobile, `24px` tablet, `24–32px` desktop) dan `16–24px` untuk `.card`. Jangan ada teks atau kontrol yang menempel tepi container.
+- **Tanpa void (ruang kosong tak beralasan):**
+  - Pada **Admin** (`.admin-shell`), kolom kanan `.admin-workspace` mengisi penuh ruang tersisa (`max-width: 84rem`) dengan tepi `.admin-page` dan `.site-footer-inner` sejajar persis. Jangan mengapungkan kolom sempit di tengah layar lebar kecuali untuk form khusus `.admin-page-narrow` (`58rem`) atau kartu auth.
+  - Pada kolom samping/kanan split layout (`.buyer-split-layout` di keranjang, checkout, detail pesanan, profil), hindari aside yang terlalu pendek meninggalkan void besar; buat sticky atau isi ringkasan pendukung yang memang berasal dari data halaman tersebut.
+- **Tanpa dinding teks:** pecah informasi ke KPI box, daftar key-value (`.admin-kv-list`), chip status, badge atribut, dan tabel yang rapi.
+- **Ritme & lapisan permukaan 3-lapis:** Kanvas (`--bg-page: #FDF6EE`) → Kartu/Permukaan (`--bg-surface: #FFFDF9`) → Inset/Tombol Sekunder (`--bg-subtle: #F6EBDD`) dengan border `--border-subtle` / `--border-hairline`. Hindari belang zebra tabel yang terlalu pekat agar isi tabel tetap mudah dipindai.
 
-1. Read the spec for tone cues: domain words, audience, region and language, seriousness (payments vs. a school club).
-2. Pick the closest **archetype** in Appendix A (without the appendix: the conventions of similar well-known products) and name a runner-up. Blend at most two. If nothing fits, use the **Modern product** preset below.
-3. Set three dials from the archetype, 1–10 each: **Density** (airy → dense), **Expressiveness** (conventional → bold) and **Motion** (feedback only → rich; rich is for Brand surfaces). Appendix A gives the scale and defaults. Adjust by at most ±2, with a stated reason.
-4. Derive the token set (§7): one brand hue, tinted neutrals, semantic colors, one type pairing, a radius and shadow personality.
-5. Write the **Design Notes** (format in §13) and keep them with the project.
-6. **Persist and reuse.** Store the decision as real tokens — Figma variables and styles, CSS variables or a Tailwind theme, or a token `DESIGN.md` — and use them on every later screen. Don't re-decide per screen; style drift over a long session is the most common failure.
-7. If the tool supports a quick choice and it costs little, you may offer three directions (background / accent / typeface plus a one-line rationale). If nobody answers, go with your best pick. Never block.
+## 6. Visual Richness & Kejelasan Tombol `[DEFAULT]`
 
-**Modern product (fallback preset).** Density 5 · Expressiveness 5 · Motion 3. Light theme on an off-white canvas; white cards with a 1px border and a soft shadow; one saturated brand color (blue or teal unless the domain suggests otherwise) with tinted surfaces for emphasis; 10–12px radius; a clean sans (Inter, DM Sans or Plus Jakarta Sans); an icon on every nav item, list row and stat; a subtle brand gradient on at most one hero element per screen; tinted section bands to separate groups. This is the familiar "modern SaaS" look — and that is fine when it is executed with care and fits the product.
-
-**When the person reacts** ("too plain", "too busy", "feels weird"), translate it with Appendix F and keep the same tokens.
-
-## 5. Layout, density and whitespace `[DEFAULT]`
-
-Space exists to group things, not to fill the canvas. Voids, stiffness and walls of text are the most common ways a "restrained" design fails.
-
-**Spacing**
-
-- **Proximity:** gap inside a group < gap between groups < gap between sections. Typical values: 8–16 within a group, 24–32 between groups, 48–80 between page sections (Brand surfaces up to 96–120). Related things sit closer than unrelated things; that alone creates structure.
-- Start generous and trim until the layout feels comfortable — then stop. Past the point where groups still read as groups, extra space is a void.
-- Page padding 16 (mobile) / 24 (tablet) / 32 (desktop). Card padding 16–24. Nothing touches a container edge.
-
-**No voids**
-
-- No region larger than about a quarter of the viewport sits empty without a reason. (A deliberate focal element with room around it is a reason.)
-- To fix a void, in this order: tighten spacing one step → rebalance into columns (for example 2/3 + 1/3) → enlarge the content that matters → add relevant content the spec supports (summary stats, recent activity, shortcuts, related items) → only then leave it empty.
-- Product screens use the full window: sidebar + fluid grid, content width up to ~1440–1600, with tables and card grids adding columns as the window grows. Don't float a narrow column in the middle of a wide empty window. Narrow measures are for reading text (60–75 characters) and for forms (480–640px) — place those inside a card or a split layout, never alone in white space.
-
-**No text walls**
-
-- UI screens are not documents. Turn prose into structure: stat tiles, cards, icon lists, tables, chips, tabs, accordions, timelines. Keep paragraphs in UI chrome to three lines.
-- Give every screen at least one non-text visual anchor suited to its content: an icon, avatar, thumbnail, chart, progress indicator, status color, illustration or image.
-
-**Rhythm and variety**
-
-- Vary the size and emphasis of blocks: a primary card larger than its supporting cards, a full-width or tinted band between groups, one clearly dominant element per screen. Avoid page after page of identical grids.
-- Layer surfaces — canvas → card → raised (popover, modal) — using tinted backgrounds, borders and shadows from tokens, so grouping comes from surface as well as space. White-on-white with only gaps reads as flat.
-- Alignment: left-align content; center only short, isolated content (auth, empty states, a hero). Snap to a grid — 12 columns on desktop, 8 on tablet, 4 on mobile.
-
-**Density by archetype** (Appendix A): dense apps use 36–44px rows and 14px text; everyday apps 48–56px rows and 14–16px text; reading and marketing surfaces 16–18px text with larger gaps.
-
-## 6. Visual richness `[DEFAULT]`
-
-Use these levers freely. They turn a correct layout into a finished-looking product.
-
-| Lever | How to use it well |
-|---|---|
-| **Color** | Brand color on primary actions, active navigation, key numbers, chart series and selected states. Tinted surfaces (brand-50) mark emphasis zones. Semantic colors for status. Roughly 60% neutral, 30% secondary surfaces and text, 10% accent. |
-| **Gradients** | Subtle and same-hue or analogous (brand-500 → brand-700) on hero panels, the primary stat card, CTAs, chart fills, avatars and cover placeholders. A purple-to-blue wash is fine when it is the brand hue rather than an unexamined default. |
-| **Depth** | Three to five named levels (flat, sm, md, lg) used consistently: cards = 1px border + sm; hover or raised = md; modals and menus = lg. The same recipe everywhere. |
-| **Icons** | One family (Lucide, Phosphor, Material Symbols or Heroicons) with consistent stroke and size (16 / 20 / 24), on nav items, buttons, list rows, stat tiles and empty states. A tinted circle or rounded square behind an icon is fine for scanability. Use SVG icons rather than emoji in product UI (emoji suit playful or children's products). |
-| **Imagery and illustration** | Avatars with initials fallback, thumbnails, cover images, and simple geometric SVG illustrations for empty states, onboarding and auth screens. With no assets, use a tinted placeholder with an icon, or a brand-hue gradient or pattern — never a blank gray box. |
-| **Data visualization** | Match chart to data (trend → line or area; comparison → bar; share → donut up to 5 slices; progress → bar or ring). Axis labels and units, tooltips, palette from tokens, an empty-chart state. |
-| **Status and feedback** | Status chips (color + icon + label), progress bars and rings, toasts, skeleton loaders, inline validation. |
-| **Typography as texture** | Strong contrast in size and weight between title, section heading, body and caption; tabular numerals for numbers; tighter tracking on large headings; muted secondary text. |
-| **Backgrounds** | Soft gradients, blurred color blobs, dot or grid patterns and subtle noise on auth screens, hero areas and empty states. Keep working canvases (tables, forms) calm. |
-| **Glass and blur** | Fine on sticky headers, overlays and floating panels when text contrast holds. |
-| **Cards and bento grids** | Good for dashboards and overviews. Vary card size by importance; use identical cards only for genuinely equal items. |
-| **Motion** | Micro-interactions on every interactive element (hover, press, focus; 120–200ms), skeleton shimmer, and one page-load or reveal moment on Brand surfaces. Ambient looping motion only on Brand surfaces, and subtle. Honor reduced motion (§10). |
-
-**Patterns that carry meaning — use them for what they mean**
-
-- Numbered markers (01 / 02 / 03) say "this is an order": use them for real sequences such as steps, timelines and rankings.
-- Badges that assert something ("Live", "New", "Beta", "Verified", counts) must reflect real data or state.
-- Nested corners follow inner radius = outer radius − padding. Radius scales with element size and hierarchy.
-
-**Keep product UIs out of editorial territory** — hairline rules everywhere, zero radius, mono-caps kicker labels above every heading, newspaper columns — unless the brief is editorial. It photographs as "designed" and feels strange to use.
-
-**Spend personality in a few repeatable places** — brand color, shape language (radius), illustration style, one hero moment — and apply them consistently. Consistency is what makes a design feel owned.
+- **Hierarki tombol tegas (Opsi A):**
+  - **Primary CTA (`.btn-primary`, `.topbar-cta`):** Karamel `#9A4D18` (`--brand`), teks `#FFFDF9`, hover `#7C3C11` — selalu jelas berbeda dari navigasi aktif sidebar (`#33200F` Deep Espresso).
+  - **Secondary & Compact Action (`.btn-secondary`, `.btn-ghost-sm`, `.admin-action-link`):** Latar terisi `--btn-secondary-bg` (`#F6EBDD`) dengan border jelas (`--border-strong` / `--border-subtle`) dan teks `#33200F`, sehingga selalu terbaca sebagai tombol di atas kartu `#FFFDF9`. Aksi di kolom `Aksi` tabel tidak boleh tampil sebagai link teks garis bawah polos.
+  - **Destructive (`.btn-danger-ghost`):** Latar lembut `#FEF2F2`, border `#FCA5A5`, teks `#991B1B`.
+- **Ikon SVG konsisten:** Gunakan SVG inline bergaya stroke bersih (`1.8`–`2`, ukuran `16px`/`18px`/`20px`/`32px`) pada navigasi sidebar, tombol aksi utama, tombol kembali, state kosong, dan kartu produk. Hindari mencampur ikon Unicode (`☰`, `×`) dengan SVG di header/drawer.
+- **Gambar & placeholder produk:** Tampilkan foto produk asli bila `hasImage()` bernilai true; bila belum ada foto, tampilkan tile ikon di atas `--bg-media: #EFE2D2` dengan tag kategori dan atribut (`Pre-Order` / `Bekas` / `Unggulan`) yang terstruktur.
+- **Visualisasi data:** Gunakan Chart.js di halaman `/admin`, `/admin/funnel`, `/admin/aktivitas` dengan palet warna Warm Cream & Deep Espresso yang sudah dikonfigurasi di `resources/js/app.js`.
+- **Status & umpan balik:** Chip status selalu memadukan warna semantik + teks label (+ ikon bila relevan). Angka harga `Rp`, kuantitas, VA, dan kode referensi wajib `tabular-nums` dan `white-space: nowrap` pada sel harga tabel agar tidak patah 2 baris.
 
 ## 7. Tokens `[HARD — values come from tokens]`
 
-Define tokens once (starter values in Appendix C) and pull every value from them. Need something new? Add a token; don't hard-code a one-off. Components reference tokens, never raw values.
+Seluruh nilai warna, font, radius, shadow, dan transisi **wajib** berasal dari `resources/css/tokens.css` (dan tidak meng-hardcode hex ad-hoc di Blade atau `app.css` di luar token yang ada). Lihat nilai lengkap di **Appendix G** dan `docs/ui-minimalist-spec.md`.
 
-- **Color** — brand (50–900 scale), neutrals tinted toward the brand hue rather than pure gray, surface / background / border, text primary / secondary / tertiary, and semantic success / warning / error / info (each with a tinted background and a text shade). Build scales by lightness steps and check every text-on-background pair for contrast.
-- **Typography** — display, h1–h3, body-lg, body, body-sm, caption, label. One family for UI, an optional display family on Brand surfaces, and mono for code and IDs. Choose for legibility and fit with the archetype. Familiar, well-supported families (Inter, Geist, DM Sans, Plus Jakarta Sans, Manrope, Figtree, Nunito Sans, IBM Plex Sans, Public Sans, Source Sans 3) are good choices and are not wrong for being common. Body 16px by default and ≥ 14px in dense apps; line height 1.5–1.6 for body and 1.2–1.3 for headings; 45–75 characters per line; no thin weights for body text.
-- **Spacing** — 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 / 96.
-- **Radius** — choose a personality (sharp 4 · balanced 8–12 · soft 16–24) and apply it by hierarchy: small for inputs and chips, medium for buttons and cards, large for modals and hero panels, full for avatars and pills.
-- **Elevation** — flat / sm / md / lg, as in §6.
+## 8. Responsive Design `[HARD requirement — behaviors below are DEFAULT]`
 
-## 8. Responsive design `[HARD requirement — behaviors below are DEFAULT]`
+Uji dan rancang seluruh halaman pada **3 breakpoint utama**:
 
-Build **one adaptive layout system**, not two designs that happen to look similar. Resizing the frame or viewport should reveal the right layout on its own.
+| Breakpoint | Lebar Uji | Perilaku Tata Letak Proyek |
+| --- | --- | --- |
+| **Mobile** | `~390px` (`360–767px`) | 1 kolom; topbar storefront menjadi drawer; sidebar admin menjadi drawer slide-over; kategori katalog ringkas/horizontal agar produk cepat terlihat; tabel `.admin-table-wrap` berubah menjadi kartu key-value berlabel `data-label`; `.pager-mobile` tampil; target sentuh `>= 44×44px`. |
+| **Tablet** | `768px` (`768–1023px`) | Sidebar admin masih drawer (`< 1024px`); layout split/filter membungkus rapi tanpa celah tombol yatim; grid produk 2–3 kolom; filter tanggal & kategori tersusun proporsional. |
+| **Desktop** | `1280px+` (`1024px+`) | Admin memakai CSS Grid `.admin-shell` (`16rem minmax(0, 1fr)`) dengan sidebar sticky `100vh`; Storefront `max-width: 72rem`; `.buyer-split-layout` 2 kolom (`1.6fr / 1fr`) dengan summary sticky; kategori katalog sticky di kiri; tabel tanpa overflow horizontal halaman. |
 
-| Breakpoint | Width | Typical layout |
-|---|---|---|
-| Mobile | 360–767 | 1 column; bottom tab bar or drawer; cards instead of wide tables |
-| Tablet | 768–1023 | 2 columns; collapsible or icon-only sidebar |
-| Desktop | 1024+ | Sidebar + fluid content grid; 3–4 columns |
+## 9. Components and States `[DEFAULT]`
 
-Define what changes at each breakpoint, not just "gets smaller":
-
-- **Reflow** — 4 → 2 → 1 columns; secondary panels move below the main content or into tabs or sheets.
-- **Navigation transforms** — desktop sidebar → tablet icon rail → mobile bottom tabs (max 5) or drawer. Decide it and document it.
-- **Tables become cards or key-value rows** on mobile (title, status, one or two key fields, an actions menu); filters move into a bottom sheet.
-- **Hide or show, not just shrink** — secondary content collapses behind a control instead of surviving at illegible sizes.
-- **Type and spacing scale on tokens**, never arbitrary per-breakpoint values.
-- **Touch targets** ≥ 44×44 on mobile and tablet (48 preferred).
-- **Width** — Product screens fill the window up to ~1440–1600 and add columns as they grow. Brand and reading surfaces cap at ~1200–1280.
-- Use auto-layout or constraints (flex and grid in code) on every frame and component. If the tool can only produce fixed-size mocks, deliver explicit mobile and desktop frames built from the same tokens and components, and say so.
-
-`[CHECK]` Resize across the full range, not only the endpoints. Confirm nothing overlaps, truncates unexpectedly, or leaves orphaned gaps.
-
-## 9. Components and states `[DEFAULT]`
-
-- Reuse an existing component before creating a new one. Express differences as variants and properties — `Button(variant: primary, size: lg, state: loading)` — not as new components.
-- Design the states a user will actually meet:
-  - **Buttons:** default, hover, pressed, focus-visible, disabled, loading.
-  - **Inputs:** default, focus, filled, error, disabled (plus success when validation is asynchronous).
-  - **Lists and tables:** loading (skeleton), empty, no results, error with retry, populated, selected.
-  - **Navigation:** default, hover, active, collapsed or mobile.
-  - **Custom multi-value controls** (tabs, segmented control, role switch): one explicit state per value.
-- Show states in context on the real screens — an error on the form, skeleton rows on the list. For handoff to a coding agent, also provide a compact **state sheet**: one frame per component family, not a re-capture of whole pages, each state named `component_state` (`button_loading`, `input_error`, `role-toggle_admin-selected`). Natively in Figma, build each state as a frame and use Combine as Variants.
-- Transitions get a written spec, not enumerated frames (Appendix E).
-- Keep the component set as small as the spec allows. Don't add modals, variants or states without a user or technical reason.
+Gunakan kembali komponen dan class di `tokens.css` / `app.css` sebelum membuat class baru. Setiap kontrol interaktif wajib mendukung state nyata:
+- **Tombol:** default, hover, active, `focus-visible` (outline karamel `2px`), `disabled` (`opacity: 0.45`).
+- **Input / Select / Textarea:** default, hover, focus (ring `rgba(154, 77, 24, 0.2)`), filled, `aria-invalid="true"` + pesan error inline, `disabled`/`readonly`.
+- **Daftar & Tabel:** populated, empty (`.admin-empty` / `.shop-empty` dengan CTA jelas kembali/reset/tambah), hasil pencarian kosong, dan pagination (`.pager*`).
+- **Navigasi:** default, hover, `aria-current="page"` / `.is-active`, drawer mobile terbuka/tertutup.
 
 ## 10. Accessibility `[HARD]`
 
-- Contrast: 4.5:1 for body text; 3:1 for large text and for any boundary or icon that carries meaning (an input's border counts).
-- Color is never the only carrier of meaning — pair it with an icon, label or pattern.
-- Visible keyboard focus on every interactive element.
-- Semantic structure and real accessible names. Labels are not placeholders; errors are tied to their fields.
-- Touch targets ≥ 44×44 px.
-- Respect reduced-motion preferences (replace movement with a fade, or nothing).
-- Text stays usable at 200% zoom and at larger system font sizes.
+- Kontras teks body minimal `4.5:1`; teks besar dan batas kontrol/ikon bermakna minimal `3:1`.
+- Warna bukan satu-satunya penanda status (selalu sertakan teks label/ikon).
+- Fokus keyboard `:focus-visible` jelas pada semua tombol, link, input, segmented radio, dan tombol modal.
+- Label form selalu terlihat di atas input (`<label for="...">`), bukan hanya placeholder; error terhubung lewat `aria-describedby`.
+- Target sentuh di layar sentuh `>= 44×44px`.
+- Seluruh transisi dan grafik Chart.js menghormati `@media (prefers-reduced-motion: reduce)` (tanpa pengecualian apa pun).
 
-## 11. Content, language and UX writing `[DEFAULT]`
+## 11. Content, Language and UX Writing `[DEFAULT]`
 
-- **Realistic, domain-specific content.** Fill every table, card and chart with sample data that matches the schema: plausible names, amounts, dates, statuses and avatars; long and short values; zero and large numbers. Empty or lorem-ipsum screens look broken and hide layout problems. What to avoid is fabricated *claims* presented as fact (customer logos, testimonials, awards, "10,000+ users") on marketing surfaces — use clearly marked placeholders or omit the block.
-- **Language and locale.** Write UI copy in the language of the brief or spec, and format numbers, currency, dates, phone numbers and names for that locale (for Indonesian: "Rp 1.250.000", "12 Okt 2026", "+62 812-3456-7890").
-- **Labels name the exact action** ("Save changes", "Create invoice") in active voice and sentence case. An action keeps its name through the whole flow: "Publish" leads to "Published".
-- **Errors and empty states** say what happened and what to do next, in the product's voice — no blame, no filler like "Oops!". An empty state is an invitation with one clear action.
-- **Plain words, specific copy.** Name things the way users do, not the way the system is built. Skip hype ("seamless", "unlock the power") and keep chat or prompt language out of the UI.
+- **Bahasa & lokal:** 100% Bahasa Indonesia baku yang natural dan ramah untuk e-commerce.
+- **Format angka, uang, waktu:** Rupiah `Rp 1.250.000`, tanggal `27 Nov 2026 16:00 WITA` (`Asia/Makassar`), nomor HP Indonesia (`0812...`).
+- **Label aksi spesifik:** Gunakan kata kerja tindakan yang jelas (*"Tambah ke Keranjang"*, *"Lanjut ke Checkout"*, *"Buat Pesanan"*, *"Konfirmasi Pembayaran"*, *"Simpan perubahan"*, *"Bersihkan pencarian"*).
+- **Anti lorem ipsum & klaim fiktif:** Gunakan data domain `Cloraamine` (photocard, album, merchandise, stiker custom, pin button custom). Jangan menambah testimoni, logo mitra, atau angka pengguna fiktif.
 
-## 12. Scope, conflicts and incomplete briefs `[DEFAULT]`
+## 12. Scope, Conflicts and Authority Order `[DEFAULT]`
 
-- **Complete means** every screen and state the spec needs, at full visual quality — not a skeleton, and not a wireframe in color.
-- **Match the register.** Don't produce a landing page when the spec describes an app, or a dashboard when it describes a landing page. Don't add pricing tables, testimonials, onboarding tours or sign-in to a tool that doesn't need them.
-- **Fewer features, not plainer visuals.** If a "simple landing page" is ballooning into 14 components and 6 modals, cut the features and states you can't justify — and keep the visual polish.
-- **Authority order for visual decisions:** (1) an existing design system or codebase tokens → (2) explicit instructions in this task → (3) the Style Override in Appendix G → (4) this file's defaults. The brief's own words win even when they ask for a look this file wouldn't choose. Note any deviation in one line.
-- **Ambiguity:** state a one-line assumption and continue.
-- **Consistency over time.** Before each new screen or revision, re-read the Design Notes and tokens and reuse them. Don't drift back to generic defaults as the session grows.
+**Authority order keputusan visual di proyek ini (tertinggi ke terendah):**
+1. **`resources/css/tokens.css` + `docs/ui-minimalist-spec.md`** (sumber kebenaran token & spesifikasi UI aktif di codebase).
+2. **Instruksi eksplisit pemilik proyek (Ren) pada task aktif.**
+3. **Appendix G (Style Override)** di dokumen ini.
+4. **Aturan default Bagian 1 & Bagian 2 `DESIGN.md` ini.**
 
-## 13. Review and delivery `[CHECK]`
+Aturan kerja tambahan:
+- **Jangan mengubah preset/warna seenaknya** di tengah jalan; semua sesi/room chat harus konsisten mengikuti token yang sama.
+- Jika menemukan celah teknis/keputusan produk saat merencanakan atau mengaudit UI, **tulis sebagai Open Question** untuk dikonfirmasi, jangan mengasumsikan atau menambah fitur backend secara diam-diam.
 
-Review every screen at three widths (≈390, 768, 1280) with realistic data before calling it done.
+## 13. Review and Delivery `[CHECK]`
 
-- [ ] **Spec** — every entity, field, action, role and state in the spec appears somewhere; terms match the spec; nothing invented without being flagged.
-- [ ] **Focal point** — one clear primary element per screen; hierarchy reads in a squint test (first, second, third).
-- [ ] **No voids** — no large, purposeless empty area (§5).
-- [ ] **No text walls** — every screen has a visual anchor; prose is structured.
-- [ ] **Consistency** — one radius personality, one shadow recipe, one icon family; spacing and colors only from tokens.
-- [ ] **Comfort** — body ≥ 14px, line length ≤ 75 characters, contrast passes, alignment on the grid, nothing touching container edges, no odd or hard-to-read fonts.
-- [ ] **Responsive** — resized across the whole range; navigation and tables transform as documented.
-- [ ] **States** — interactive components and data views show their real states, not only the default.
-- [ ] **Accessibility floor** (§10) is met.
-- [ ] **Content** — realistic, in the right language and locale; no lorem ipsum.
-- [ ] **Would you trust it?** — compare it with a mature product in the same category. If it looks like a wireframe, add polish (§6). If it looks cluttered, remove the least useful decoration first.
+Sebelum menyatakan perbaikan UI selesai, periksa seluruh layar pada lebar `390px`, `768px`, dan `1280px`:
 
-**Deliver Design Notes with the design** (10 lines at most, in chat or in a frame):
+- [ ] **Spec & Scope** — tidak ada fitur/entitas/aktor baru yang di-invent; copy brand berasal dari `config('store.*')`; seluruh form, route, dan asersi tes tetap utuh.
+- [ ] **Kejelasan Tombol** — tombol CTA utama (`#9A4D18`), tombol sekunder (`#F6EBDD`), tombol destruktif (`#FEF2F2`), dan tombol aksi baris (`32px`) terbaca jelas sebagai tombol.
+- [ ] **Layout & Tanpa Void** — `.admin-shell` sejajar penuh antara sidebar, konten, dan footer; tidak ada celah kosong janggal atau tabel patah 2 baris pada harga.
+- [ ] **Konsistensi** — hanya memakai token `tokens.css`, satu gaya ikon SVG, radius & shadow konsisten, tidak ada inline style ad-hoc yang tidak perlu.
+- [ ] **Responsif & A11y** — rapi di `390px`, `768px`, `1280px`; kontras, fokus keyboard, label form, dan `prefers-reduced-motion` terpenuhi.
+- [ ] **Verifikasi** — `npm.cmd run build` dan `php artisan test` lulus setelah perubahan terakhir.
 
-```
+**Format Design Notes proyek Cloraamine:**
+
+```text
 Design Notes
-- Register · archetype: Product · Admin/back-office (runner-up: Analytics SaaS)
-- Dials: Density 7 · Expressiveness 3 · Motion 2
-- Tokens: brand #0F766E · slate neutrals · Inter · radius 8 · shadows sm/md/lg
-- Assumptions: …
-- Added screens (not in spec): …
-- Backend needs: …
-- To restyle: say "warmer", "denser", "dark mode" or "more playful" — only tokens change (Appendix F).
+- Register · archetype: Admin (Product · Back-Office D7/E3/M2) | Storefront (Product · E-Commerce D5/E5/M4)
+- Tokens: Warm Cream & Deep Espresso — canvas #FDF6EE · surface #FFFDF9 · inset #F6EBDD · espresso #33200F · caramel CTA #9A4D18
+- Type & Shape: Plus Jakarta Sans + Inter + JetBrains Mono (tabular-nums) · radius 6/8/10/12px · warm espresso shadows
+- Scope check: 2 aktor (Pembeli, Admin Toko) · 2 pemenuhan (pickup, kurir) · tanpa fitur/skema baru
 ```
 
 ---
 
 # PART 2 — REFERENCE APPENDICES
 
-## Appendix A — Archetypes and dials
+*(Appendix A–F dan I dipertahankan sebagai referensi prinsip & pola dari `DESIGN.md` v2 dengan penyesuaian dial resmi proyek; **Appendix C biru TIDAK dipakai sebagai palet proyek ini**; **Appendix G & Appendix H telah diganti penuh** sesuai proyek `Cloraamine`.)*
 
-Pick the closest archetype (§4), set the three dials from it, and adjust by at most ±2 with a stated reason.
+## Appendix A — Archetypes and Dials (Acuan Terkunci Proyek)
 
-- **Density** — 1–3 airy (reading, marketing) · 4–6 balanced (everyday apps) · 7–10 dense (cockpit, tables).
-- **Expressiveness** — 1–3 utility (familiar layouts, restrained color) · 4–6 polished with character · 7–10 bold, editorial.
-- **Motion** — 1–2 feedback only · 3–5 plus subtle transitions and one entrance · 6–10 rich (Brand surfaces only).
+- **Admin Toko (`admin_toko`):** **D7 / E3 / M2** — mengacu arketipe *Admin / Back-Office + Analytics SaaS*, disesuaikan ke tema *Warm Cream & Deep Espresso* dengan kepadatan tabel yang tetap terbaca.
+- **Storefront E-Commerce (`pembeli` & tamu):** **D5 / E5 / M4** — mengacu arketipe *E-Commerce / Catalog*, disesuaikan ke tema *Warm Cream & Deep Espresso* dengan aksen tombol karamel `#9A4D18`.
 
-| Archetype (tone reference) | D / E / M | Palette and shape | Type | Typical visual anchors |
-|---|---|---|---|---|
-| **Admin, back-office, school or company management** (Stripe Dashboard, Linear, Vercel) | 7 / 3 / 2 | Slate neutrals + blue, indigo or teal accent; 8px radius; 1px borders + sm shadow | Inter, Geist or Public Sans | Icon sidebar, filter chips, tables with avatars and status chips, KPI tiles |
-| **Analytics, SaaS dashboard, CRM** (Plausible, PostHog, HubSpot) | 6 / 4 / 3 | Neutral + one vivid brand (blue, violet or teal); 12px radius | DM Sans, Manrope or Inter; tabular numerals | KPI cards with deltas, line and bar charts, activity feed |
-| **Education, LMS, student portal** (Duolingo, Khan Academy, Google Classroom) | 4 / 6 / 4 | Friendly teal or blue + a warm accent (orange, yellow); soft tinted backgrounds; 16px radius | Nunito Sans, Plus Jakarta Sans or Figtree | Course cards with cover art, progress rings and bars, badges, illustration, larger readable type |
-| **Consumer app, social, community** (Instagram, Pinterest) | 4 / 7 / 5 | Saturated brand + a playful accent; 16–24px radius | Plus Jakarta Sans, Outfit or Poppins | Avatars, image-first cards, reactions, bottom tabs |
-| **E-commerce, marketplace, catalog** (Tokopedia, Shopee, Etsy) | 5 / 5 / 4 | Clean white or stone canvas so products lead; one CTA color; 8–12px radius | DM Sans or Inter | Product-image cards, price emphasis, ratings, filter sidebar, sticky cart |
-| **Fintech, banking, accounting** (Wise, Revolut, Stripe) | 5 / 3 / 2 | Deep navy, blue or teal; green = positive, red = negative; 8–12px radius | IBM Plex Sans or Inter; tabular numerals | Large balance figures, right-aligned amounts, clear statements, security cues |
-| **Healthcare, clinic, wellness** (One Medical, Halodoc) | 4 / 3 / 2 | Calm blue, teal or green on white; 12px radius; 48px targets | Source Sans 3, Nunito Sans or Public Sans | Appointment cards, status timelines, large form fields, clear alerts |
-| **Developer tool, API, DevOps, monitoring** (GitHub, Vercel, Railway) | 8 / 3 / 2 | Dark-first (offer light); zinc neutrals + one accent; 6–8px radius | Geist or Inter + JetBrains Mono | Logs, status dots, code blocks, command palette, tables |
-| **Booking, travel, food, hospitality** (Airbnb, Traveloka) | 4 / 7 / 4 | Warm, appetizing palette (terracotta, amber, forest, ocean); 12–20px radius | DM Sans; optionally Fraunces or DM Serif Display for headings | Photo-forward cards, maps, ratings, date pickers, booking summary |
-| **Productivity, collaboration, tasks** (Notion, Trello) | 6 / 4 / 3 | Neutral + a soft accent; 8px radius | Inter or Geist | Kanban and list views, avatars, due-date chips, hover actions |
-| **Content, media, blog, docs** (Medium, Substack) | 3 / 5 / 2 | Warm white; optional serif body; 60–70 character measure | Source Serif 4, Lora or Newsreader + a sans for UI | Cover thumbnails, author avatars, category chips |
-| **Logistics, POS, field operations, kiosk** | 5 / 2 / 1 | High contrast; targets ≥ 48px; strong status colors; 8–12px radius | Inter or Roboto Flex | Big numeric keypad, scan states, offline indicator, large primary buttons |
-| **Government, public service, NGO** (GOV.UK) | 4 / 2 / 1 | Conservative blue or green + neutral; very high contrast; 4–8px radius | Public Sans or Source Sans 3 | Stepper forms, clear status pages, plain-language help |
-| **Brand: landing, portfolio, campaign** (Brand register) | 3 / 7–9 / 4–6 | Bolder palette; one signature element; imagery | A display face + a readable body face | Hero visual, benefit strip with icons, alternating feature sections |
+## Appendix B — Mapping Elemen Sistem yang Sudah Ada
 
-Tone references are for mood only — don't copy logos, colors or trade dress. If the audience is the general public on phones, assume mid-range Android devices, uneven connectivity and bright light unless the brief says otherwise: favor high contrast, large targets and light assets.
+- **Entitas aktif:** Produk, Kategori Produk, Keranjang, Pesanan, Pembayaran, Akun Pembeli, Alamat Pembeli, Riwayat Stok, Event Aktivitas.
+- **Navigasi:** Storefront topbar (≤ 6 item saat login, drawer mobile `< 768px`); Admin sidebar 4 kelompok (`RINGKASAN`, `TOKO`, `TRANSAKSI`, `AKUN`, drawer mobile `< 1024px`).
 
-## Appendix B — From system spec to screens
+## Appendix C — Catatan Token Referensi (Tidak Dipakai)
 
-### B1. Derive the screens
+> **Catatan:** Starter token preset biru (`#2563EB` / `#F8FAFC`) dari `DESIGN.md` v2 asli **dinonaktifkan** untuk proyek ini. Gunakan `resources/css/tokens.css` dan **Appendix G** di bawah.
 
-| Spec element | Becomes |
-|---|---|
-| Entity | List page + detail page + create/edit form (only the ones its operations imply) |
-| Relationship | Links between detail pages; a related-items tab or panel; a searchable select in forms |
-| Role or permission | Role-specific navigation and actions; role badge in the profile; hide what a role should never know about, disable-with-tooltip what it could get access to |
-| Status enum or state machine | A status chip per value; allowed transitions as buttons (only valid next states); a history timeline |
-| Multi-step flow | Stepper or wizard with progress, back/next, per-step validation and a review step |
-| Async job, webhook, import | Progress or status chip, refresh or polling, cancel and retry, completion toast, failure detail |
-| Aggregates and metrics | KPI tiles, charts, and the table behind the numbers |
-| Notifications and events | Bell with unread count, notification list, per-type preferences |
-| Validation rule or error code | Inline field message, or a banner with a next action |
-| Config and profile data | Settings page grouped by topic |
+## Appendix D — Screen Recipes (Ringkasan Pola Layar Proyek)
 
-### B2. Navigation model
+- **Auth (`/masuk`, `/daftar`):** Split desktop (`.auth-brand` gelap `#33200F` di kiri + `.auth-card` `#FFFDF9` di kanan); mobile bertumpuk rapi.
+- **Beranda (`/`):** Hero editorial gelap `#33200F` + section produk (`Terlaris` kondisional, `Terbaru`, `Teratas`) dipisahkan `.home-section-head` beraksen kiri `#9A4D18`.
+- **Katalog (`/katalog`) & Detail (`/produk/{id}`):** Filter toolbar di atas + `.shop-layout` (sidebar kategori sticky di kiri desktop + grid produk di kanan) + pagination `.pager*`.
+- **Keranjang, Checkout, Pembayaran:** `.buyer-split-layout` 2 kolom (daftar/instruksi di kiri, ringkasan/countdown sticky di kanan); halaman hasil & struk cetak `@media print` 1 kolom terfokus.
+- **Admin (`/admin/*`):** `.admin-head` terbingkai aksen kiri + filter + KPI/grafik Chart.js atau tabel operasional bersih + pagination `.pager*`.
 
-- Up to 5 top-level sections: top bar on desktop, bottom tabs on mobile.
-- 6–12 sections: grouped sidebar on desktop; bottom tabs for the top 4–5 plus "More" on mobile.
-- More than 12: sidebar with collapsible groups plus search or a command palette.
-- Group by the user's tasks, not by database tables.
+## Appendix E — Transitions
 
-### B3. Field type → component
+- Hover tombol, kartu, link: `150ms cubic-bezier(0.2, 0.8, 0.2, 1)` (`--transition-fast`).
+- Drawer sidebar/topbar & modal tamu: `150ms`, nonaktif saat `prefers-reduced-motion: reduce`.
 
-| Data in the spec | Component |
-|---|---|
-| Enum or status | Colored chip (color + icon + label) in lists; select, segmented control or radio in forms |
-| Boolean | Toggle for settings; checkbox for agreement or selection |
-| Short text | Input with label, helper text, inline error; character count when there is a limit |
-| Long text | Auto-growing textarea; truncate with "show more" in lists |
-| Number or quantity | Numeric input or stepper; right-aligned with tabular numerals in tables |
-| Money | Currency prefix, locale format (for example Rp 1.250.000), right-aligned, tabular |
-| Date or time | Date picker; relative time ("2 jam lalu") with the exact value on hover |
-| Date range | Range picker with presets |
-| Relation (foreign key) | Linked chip or avatar + name that opens the detail; searchable select in forms |
-| Many-to-many | Multi-select chips or a tag input |
-| Image or avatar | Avatar with initials fallback; thumbnail grid; uploader with preview and progress |
-| File | File row (type icon, name, size, download); dropzone |
-| Email, phone, URL | Typed input with validation; copy and open actions |
-| Rating | Stars or a number with a count |
-| Progress or percentage | Bar or ring with a label |
-| Time series | Line or area chart; KPI tile with delta |
-| Category breakdown | Bar chart or donut (up to 5 slices) |
-| Geo location | Map with pin and address |
-| Hierarchy | Tree, breadcrumb or nested list |
-| Large list (> 20 items) | Search + filters + sort + pagination (or infinite scroll) + bulk select |
-| Long-running job | Progress + status chip + cancel/retry + toast on completion |
-| Error code | Mapped to an inline field error or a banner with the next step |
+## Appendix F — Translating Feedback
 
-## Appendix C — Starter tokens
+- "Terlalu polos / kurang kontras" → perkuat pemisahan 3-lapis permukaan (`#FDF6EE` / `#FFFDF9` / `#F6EBDD`), border `--border-subtle` (`#D8C3AC`), dan aksen kiri `--brand` (`#9A4D18`).
+- "Ngga jelas mana tombolnya" → pisahkan warna CTA primer (`#9A4D18`) dari navigasi aktif (`#33200F`), beri latar `#F6EBDD` pada tombol sekunder, dan ubah semua aksi baris tabel menjadi tombol kompak.
+- "Layout berantakan / terasa kosong" → samakan alignment `.admin-shell` + footer, rapikan lebar kolom tabel agar harga tidak patah 2 baris, dan sejajarkan proporsi panel split.
 
-An example starting point for the **Modern product** preset (blue). Swap the brand hue per archetype, keep the lightness steps, and recheck contrast. For light hues (yellow, lime, amber) use dark text on the brand color instead of white.
+## Appendix G — Style Override (`Cloraamine` — WAJIB DIIKUTI)
 
-```css
-:root {
-  /* Brand — example: blue */
-  --brand-50:#EFF6FF;  --brand-100:#DBEAFE; --brand-200:#BFDBFE;
-  --brand-500:#3B82F6; --brand-600:#2563EB; --brand-700:#1D4ED8; --brand-900:#1E3A8A;
+```text
+Product vibe (3 adjectives): Hangat, terstruktur, tegas (Warm, structured, crisp)
+Brand identity: Cloraamine (terpusat di config/store.php — jangan hardcode)
+Theme: Light only (dilarang mengaktifkan dark mode otomatis dari OS; @custom-variant dark dikunci ke .dark)
 
-  /* Neutrals — slate (slightly cool); warm products use stone */
-  --bg:#F8FAFC; --surface:#FFFFFF; --surface-2:#F1F5F9;
-  --border:#E2E8F0;          /* decorative borders: cards, dividers */
-  --border-input:#7B8BA3;    /* controls whose edge is the only affordance (>= 3:1) */
-  --text:#0F172A; --text-2:#475569;
-  --text-3:#64748B;          /* captions, hints — only on --surface and --bg */
-  --focus:#2563EB;           /* 2px ring + 2px offset */
+Color palette (Warm Cream & Deep Espresso — dari resources/css/tokens.css):
+  - Canvas halaman (--bg-page): #FDF6EE
+  - Permukaan kartu/panel/topbar/sidebar/tabel (--bg-surface): #FFFDF9
+  - Permukaan inset & latar tombol sekunder (--bg-subtle / --btn-secondary-bg): #F6EBDD (hover #EADBC9)
+  - Track/muted (--bg-muted): #EADBC9
+  - Slot media/thumbnail produk (--bg-media): #EFE2D2
+  - Permukaan gelap editorial hero & panel auth (--surface-ink): #33200F (elevated #452C17, border #5E3F24, text #FDF6EE)
+  - Teks: primary #33200F, secondary #543921, muted #735337, disabled #A68B72
+  - Border: hairline #E8D9C8, subtle #D8C3AC, strong #B5987B
+  - Navigasi aktif sidebar/kategori/tab (--accent): Deep Espresso #33200F (teks #FDF6EE)
+  - Tombol CTA utama & aksen brand (--brand — Opsi A): Karamel/Terakota #9A4D18 (hover #7C3C11, active #6E340E, teks #FFFDF9, soft #F9ECDD, border #E2BFA0)
+  - Semantik status: sukses #065F46/#ECFDF5, peringatan #92400E/#FFFBEB, bahaya #991B1B/#FEF2F2, info #7C3C11/#F9ECDD
 
-  /* Semantic — text shade + tinted background */
-  --success:#15803D; --success-bg:#DCFCE7;
-  --warning:#B45309; --warning-bg:#FEF3C7;
-  --error:#B91C1C;   --error-bg:#FEE2E2;
-  --info:#1D4ED8;    --info-bg:#DBEAFE;
+Typography:
+  - Heading: "Plus Jakarta Sans", "Inter", sans-serif
+  - Body: "Inter", sans-serif (15px base, >= 14px pada tabel padat)
+  - Monospace (kode pesanan/VA/referensi/slug): "JetBrains Mono", monospace
+  - Numerik: font-variant-numeric: tabular-nums untuk seluruh harga Rp, kuantitas, VA, dan metrik
 
-  /* Radius */
-  --r-sm:6px; --r-md:10px; --r-lg:16px; --r-full:999px;
+Shape & Elevation:
+  - Radius: xs 4px, sm 6px, md 8px, lg 10px, xl 12px, pill 9999px
+  - Shadow hangat espresso rgba(51, 32, 15, ...): card, card-hover, topbar, dropdown, modal
 
-  /* Elevation */
-  --shadow-sm:0 1px 2px rgba(15,23,42,.06), 0 1px 3px rgba(15,23,42,.08);
-  --shadow-md:0 4px 12px rgba(15,23,42,.08);
-  --shadow-lg:0 16px 40px rgba(15,23,42,.14);
+Dials:
+  - Admin Toko: D7 / E3 / M2
+  - Storefront E-Commerce: D5 / E5 / M4
 
-  /* Spacing: 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 96 */
-}
-```
-
-The text, text-2 and semantic pairs above, white on brand-600/700, and `--border-input` against `--surface` and `--bg` were checked against WCAG AA (4.5:1 for text, 3:1 for boundaries).
-
-**Type scale**
-
-| Token | Desktop (size/line) | Mobile | Weight | Note |
-|---|---|---|---|---|
-| display | 48/56 | 36/44 | 700 | Page heroes and Brand surfaces; tracking −0.02em |
-| h1 | 36/44 | 28/36 | 700 | |
-| h2 | 28/36 | 22/30 | 600 | |
-| h3 | 20/28 | 18/26 | 600 | |
-| body-lg | 18/28 | 17/26 | 400 | Reading surfaces |
-| body | 16/24 (dense apps 14/20) | 16/24 | 400 | |
-| body-sm | 14/20 | 14/20 | 400 | |
-| caption | 12/16 | 12/16 | 500 | Never smaller than 12 |
-| label | 14/20 | 14/20 | 500–600 | Buttons, form labels |
-
-**Control sizes** — buttons and inputs 32–36 (sm), 40 (md; 44 on touch), 48 (lg); table rows 36–40 (dense) or 48–56 (comfortable); avatars 24 / 32 / 40 / 56.
-
-**Dark mode** (when requested, or for developer tools) — remap neutrals to a near-black blue-gray, separate surfaces by one or two lightness steps instead of shadows, use lighter brand steps (400–500) for accents, use off-white text rather than pure white, and recheck every pair.
-
-## Appendix D — Screen recipes
-
-Compositions that work as a starting point. Fill every block with data from the spec.
-
-- **Sign in / sign up** — Desktop: split screen. A brand panel (about 45–50% width: gradient or tinted background, logo, one-line value statement, 2–3 icon bullets or an illustration) beside a form card of at most 400px, vertically centered. Mobile: brand header strip + form. Label above the field, show/hide password, inline errors, a full-width primary button with a loading state, and secondary links (forgot password, create account). Include social sign-in or SSO only if the spec has it.
-- **Dashboard / home** — Page header (greeting or title, date or filter control, primary action). A row of 3–4 KPI tiles (icon in a tinted square, number, label, delta chip). Main grid: a chart at 2/3 width beside a "needs attention" or activity list at 1/3. Below: a recent-items table or card grid with "View all".
-- **List / table page** — Header (title, total count, primary "Create …" button). Toolbar: search, filter chips, sort, view toggle. Table: sticky header; first column with avatar or thumbnail + name + a secondary line; status chip column; right-aligned numeric columns; row action menu; hover highlight; selection checkboxes with a bulk-action bar; pagination with page size. States: skeleton rows, empty (illustration + create action), no results (clear filters), error (retry). Mobile: cards or key-value rows.
-- **Detail page** — Breadcrumb; header with title, status chip and primary and secondary actions; a summary strip of 3–5 key facts; tabs as the spec implies (Overview · Activity · Related); a main column plus a side column (metadata, owner, dates); history as a timeline.
-- **Create / edit form** — Sections with a heading and a one-line description; 1–2 column grid on desktop (single column for long forms); labels above fields; helper text; required marks; inline validation from the spec; a sticky footer with Cancel and Save (loading state); an unsaved-changes guard; a stepper when the flow is sequential or has more than about 8 fields.
-- **Settings / profile** — Left sub-navigation (tabs on mobile); each setting is a row of label + description + control; groups sit in cards; a danger zone in a red-tinted card with a confirmation step.
-- **Empty state** — An illustration or tinted icon composition, a heading that names what lives here, one sentence of help, one primary action (and optionally a secondary link).
-- **Error, 403, 404** — A friendly illustration, what happened, what to do next, one button back.
-- **Landing page (Brand register, only when asked)** — Hero: a specific headline saying what the product does for whom, a sub-line, a primary CTA (and a secondary), and a product visual or illustration. Then a benefit strip (3–4 icon + short text), alternating feature sections (text ↔ visual), proof only if real data exists (otherwise omit or mark as placeholder), a closing CTA and a footer with real links. This classic skeleton is appropriate for SaaS; adapt it for portfolios and stores.
-
-## Appendix E — Transitions and state sheet
-
-Transitions are specified in a table attached to the two states they connect, not drawn frame by frame. The vocabulary matches Figma prototyping (trigger, action, Smart Animate) and maps directly to CSS transitions.
-
-| From → To | Trigger | Property | Duration | Easing |
-|---|---|---|---|---|
-| Button: default → hover | Pointer enter | background, shadow | 120ms | ease-out |
-| Button: default → pressed | Press | scale 0.98, background | 80ms | ease-out |
-| Dropdown or accordion: collapsed → expanded | Click | height, opacity | 200ms | ease-out |
-| Toggle: off → on | Click | thumb position, track color | 150ms | ease-in-out |
-| Modal: closed → open | Click | opacity, translateY 8px → 0, backdrop | 200ms | ease-out |
-| Toast: hidden → visible | Event | opacity, translateY | 200ms in / 150ms out | ease-out |
-| Page load (Brand surfaces) | Load | opacity, translateY 12px → 0, staggered by 60ms | 400–600ms total | ease-out |
-
-Under reduced motion: opacity only, or none.
-
-**State sheet naming** — `component_state`, for example `button_loading.png`, `input_error`, `dropdown_expanded`, `role-toggle_admin-selected`. Scope each artifact to the component, or to its component group when the state only reads correctly in context (a role switch shown with all roles, one selected).
-
-## Appendix F — Translating feedback
-
-When the person reacts, change the matching lever and keep the tokens consistent.
-
-| The person says | Do this |
-|---|---|
-| "Too plain / boring / empty / flat" | Expressiveness +2: tinted section bands, icons in tinted shapes, cover art or illustration, a brand-hue gradient on one hero element, richer cards (border + shadow), fill voids (§5), stronger type contrast |
-| "Too busy / cluttered / noisy" | Density −1: remove decorative layers first (extra gradients, borders, shadows), increase group spacing, cut competing accent colors, collapse secondary content |
-| "More modern" | Softer radius, lighter shadows, bigger type contrast, subtle glass or gradient accents, polished micro-interactions |
-| "More professional / serious / corporate" | Expressiveness −2: deeper brand tone, 8px radius, flat shadows, fewer gradients, denser tables |
-| "More fun / friendly / playful" | Rounder radius, a warm accent, illustration and friendly microcopy, bouncier motion (consumer and Brand surfaces) |
-| "Feels weird / off" | Return to conventional structure and familiar fonts; check alignment, radius and spacing consistency, readable sizes; remove the single most unusual choice first |
-| "Too much empty space / gaps" | Reduce section spacing one step, move to multiple columns, enlarge or add supporting content (§5) |
-| "Hard to read" | Raise body size, contrast and line height; shorten the line length; calm any busy background behind text |
-| "Make it dark / light" | Remap neutrals and surfaces; keep the brand hue; recheck contrast |
-| "I don't like the colors" | Change only the brand hue and the tint of the neutrals; keep the structure |
-
-## Appendix G — Style Override (optional)
-
-Fill in what you know and leave the rest blank; blank lines are inferred (§4). Anything written here outranks this file's defaults (§12).
-
-```
-Product vibe (3 adjectives):
-Reference products or sites you like (1–3):
-Brand color(s):
-Font(s):
-Theme: light / dark / both
-Density: airy / balanced / dense
-Corners: sharp / balanced / soft
 Language and locale:
+  - Bahasa Indonesia 100%
+  - Mata uang: Rp 1.250.000 (white-space: nowrap di sel tabel)
+  - Waktu & tanggal: format Indonesia, penyimpanan UTC, tampilan/pelaporan WITA (Asia/Makassar)
+
 Must have:
+  - Pembedaan tegas tombol utama (#9A4D18), tombol sekunder (#F6EBDD), dan tombol aksi baris (32px)
+  - 2 aktor saja (Pembeli & Admin Toko) dan 2 metode pemenuhan (Ambil di Toko & Kirim via Ekspedisi)
+  - Layout admin .admin-shell sejajar penuh tanpa topbar duplikat
+  - Responsif teruji di ~390px, 768px, 1280px serta aksesibilitas WCAG AA
+
 Must avoid:
+  - Preset biru/slate lama (#2563EB, #EEF2F6)
+  - Belang zebra tabel pekat yang mengganggu keterbacaan
+  - Link teks polos bergaris bawah di kolom Aksi tabel atau tombol reset filter
+  - Elemen simulasi, guard/aktor Developer, React/shadcn, atau fitur baru di luar spec
 ```
 
-## Appendix H — Code-output defaults
+## Appendix H — Code-Output Stack (`Cloraamine` Laravel Blade)
 
-Applies only when the agent writes code and no stack is specified. An existing codebase's stack always wins.
+Seluruh kode UI di repo ini **wajib** mengikuti stack aktif berikut (menggantikan default React/TypeScript/shadcn di `DESIGN.md` v2):
 
-- React + TypeScript + Tailwind CSS + shadcn/ui (Radix primitives); Lucide icons; Recharts for charts; fonts from Google Fonts.
-- Map tokens to CSS variables and the Tailwind theme (shadcn's `--background`, `--foreground`, `--primary`, … convention) instead of hard-coding hex values in components.
-- Semantic HTML (`nav`, `main`, `table`, `button`, `label`), `:focus-visible` styles, a `prefers-reduced-motion` media query, responsive utilities (`sm:` / `md:` / `lg:`), and no fixed pixel widths on containers.
-- Realistic seed data in one typed module derived from the spec's schema, with loading, empty and error variants reachable through a prop or a mock state.
-- Use local SVG placeholders or gradients instead of remote images that can break.
-
-## Appendix I — References
-
-These shaped the revision from v1.
-
-- Anthropic — *Improving frontend design through Skills* — https://claude.com/blog/improving-frontend-design-through-skills
-- Anthropic — *Prompting Claude Sonnet 5*, "Design and frontend defaults" — https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-sonnet-5
-- Anthropic — *Prompting best practices* — https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
-- Google Labs — DESIGN.md specification — https://github.com/google-labs-code/design.md · https://stitch.withgoogle.com/docs/design-md/specification
-- Figma — guidelines for Figma Make — https://developers.figma.com/docs/code/write-design-system-guidelines/
-- Laws of UX — Aesthetic-Usability Effect and Jakob's Law — https://lawsofux.com
-- Impeccable — brand vs. product register — https://impeccable.style/tutorials/brand-vs-product
-- Taste Skill — the three-dial approach — https://github.com/Leonxlnx/taste-skill
-- UI UX Pro Max — design-system generation by product type — https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
-- Wathan & Schoger — *Refactoring UI* — https://refactoringui.com
-- Managed Code — *AI in UI Design Without the Purple Slop* — https://managed-code.com/blog-post/ai-slop-in-design
-- AskCodi — *The AI UI Problem Nobody Talks About* — https://askcodi.substack.com/p/the-ai-ui-problem-nobody-talks-about
-- Nick Babich (UX Planet) — *7 DESIGN.md Mistakes That Make AI-Generated UI Worse* — https://uxplanet.org/7-design-md-mistakes-that-make-ai-generated-ui-worse-9ec2dfcc44cd
+- **Template & Framework:** **Laravel Blade** (`resources/views/layouts/app.blade.php`, `shop/`, `auth/`, `payments/`, `admin/`, `vendor/pagination/tailwind.blade.php`).
+- **Styling:** **Tailwind CSS v4** + **CSS custom properties & komponen terpusat** di `resources/css/tokens.css` dan `resources/css/app.css`. Jangan menulis inline `style="..."` baru di Blade jika bisa memakai class terstruktur di `app.css`.
+- **Asset Bundler & Library JS:** **Vite** (`npm.cmd run build`), **Chart.js** (`chart.js/auto`) untuk grafik analitik admin, **qrcode** untuk QR pembayaran, dan vanilla JS progresif di `resources/js/app.js`.
+- **Ikon:** SVG inline stroke konsisten (gaya Lucide, `stroke-width="1.8"`–`"2"`); hindari karakter teks/emoji sebagai pengganti ikon UI.
+- **Pengujian:** **Pest** (`php artisan test`) — setiap perubahan view/CSS harus menjaga seluruh rute, form, label/teks asersi tes, dan build manifest tetap hijau.
+- **Alat non-target:** Figma Make, Google Stitch, v0, dan Lovable **tidak digunakan** sebagai target output kode di repo ini.

@@ -26,7 +26,8 @@
             <div class="card admin-panel">
                 <div class="admin-empty">
                     <p class="admin-empty-title">Keranjang masih kosong.</p>
-                    <p><a class="admin-cell-link" href="{{ route('katalog') }}">Lihat katalog</a> untuk mulai berbelanja.</p>
+                    <p class="admin-empty-text">Mulai pilih merchandise atau produk cetak custom di katalog kami.</p>
+                    <p><a class="btn-primary" href="{{ route('katalog') }}">Lihat katalog</a></p>
                 </div>
             </div>
         @else

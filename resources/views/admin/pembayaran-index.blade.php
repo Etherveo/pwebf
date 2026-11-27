@@ -89,7 +89,10 @@
                                 <td data-label="Pembeli">
                                     <span class="admin-cell-primary">{{ $payment->user->name }}</span>
                                 </td>
-                                <td data-label="Metode">{{ config('payment.methods.'.$payment->payment_method.'.label', $payment->payment_method) }}</td>
+                                <td data-label="Metode">
+                                    <span>{{ config('payment.methods.'.$payment->payment_method.'.label', $payment->payment_method) }}</span>
+                                    <div class="admin-cell-sub">{{ $payment->hasProof() ? 'Bukti bayar diunggah' : 'Belum ada bukti bayar' }}</div>
+                                </td>
                                 <td data-label="Nominal">
                                     <span class="admin-cell-price">{{ $payment->formattedAmount() }}</span>
                                 </td>

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 // PRD-01/PRD-02/PRD-03: name 2-150 unique case-insensitively, category
@@ -35,7 +36,7 @@ class ProductRequest extends FormRequest
             'is_preorder' => ['sometimes', 'boolean'],
             'preorder_eta' => ['nullable', 'string', 'max:150'],
             'is_featured' => ['sometimes', 'boolean'],
-            'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'remove_image' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
         ];
@@ -64,5 +65,20 @@ class ProductRequest extends FormRequest
                 $validator->errors()->add('name', 'Nama produk sudah digunakan.');
             }
         });
+    }
+
+    public function messages(): array
+    {
+        $file = $this->file('image');
+        $uploadError = $file instanceof UploadedFile ? $file->getError() : null;
+        $uploadedMessage = in_array($uploadError, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)
+            ? 'Ukuran foto produk melebihi batas maksimal 2 MB (batas unggah PHP: '.(ini_get('upload_max_filesize') ?: '2M').'). Pilih foto di bawah 2 MB.'
+            : 'Foto produk gagal diunggah ke server (kode galat PHP: '.($uploadError ?? 'tidak diketahui').'). Pastikan ukuran foto maksimal 2 MB.';
+
+        return [
+            'image.uploaded' => $uploadedMessage,
+            'image.mimes' => 'Foto produk harus berformat JPG, JPEG, PNG, atau WEBP.',
+            'image.max' => 'Ukuran foto produk maksimal 2 MB.',
+        ];
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 // M2 PRD-01..07, STK-01, blueprint §6.2.
 // stock_available is DERIVED (stock_on_hand - stock_reserved), never a
@@ -52,6 +53,16 @@ class Product extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleted(function (Product $product): void {
+            if ($product->hasImage()) {
+                Storage::disk('public')->delete($product->image_path);
+                Storage::disk('local')->delete($product->image_path);
+            }
+        });
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -86,6 +97,14 @@ class Product extends Model
 
     public function imageUrl(): ?string
     {
-        return $this->hasImage() ? route('produk.foto', $this) : null;
+        if (! $this->hasImage()) {
+            return null;
+        }
+
+        if (str_starts_with($this->image_path, 'product-photos/')) {
+            return route('produk.foto', $this);
+        }
+
+        return '/storage/'.ltrim($this->image_path, '/');
     }
 }

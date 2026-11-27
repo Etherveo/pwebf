@@ -91,11 +91,19 @@ class CatalogController extends Controller
             abort(404);
         }
 
-        if (! $product->hasImage() || ! Storage::disk('local')->exists($product->image_path)) {
+        if (! $product->hasImage()) {
             abort(404);
         }
 
-        return Storage::disk('local')->response($product->image_path);
+        if (Storage::disk('public')->exists($product->image_path)) {
+            return Storage::disk('public')->response($product->image_path);
+        }
+
+        if (Storage::disk('local')->exists($product->image_path)) {
+            return Storage::disk('local')->response($product->image_path);
+        }
+
+        abort(404);
     }
 
     // SHP-03: % and _ in the keyword are literal characters, not LIKE

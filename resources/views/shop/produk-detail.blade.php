@@ -19,7 +19,7 @@
                     @endif
                 </span>
                 @if ($product->hasImage())
-                    <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" style="width: 100%; max-height: 24rem; object-fit: contain; border-radius: inherit;">
+                    <img class="product-detail-img" src="{{ $product->imageUrl() }}" alt="{{ $product->name }}">
                 @else
                     <span class="product-art-tile product-art-tile-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/></svg>
@@ -46,7 +46,7 @@
 
                 <h1 class="shop-title">{{ $product->name }}</h1>
                 <p class="product-category">Kategori: {{ $product->category?->name }}</p>
-                <p class="product-price product-price-lg">Harga: {{ $product->formattedPrice() }}</p>
+                <p class="product-price product-price-lg">{{ $product->formattedPrice() }}</p>
                 @if ($product->is_preorder && $product->preorder_eta)
                     <p class="admin-info-box"><strong>Info Pre-Order:</strong> {{ $product->preorder_eta }}</p>
                 @endif
@@ -82,7 +82,10 @@
                     </div>
                 @endif
 
-                <p><a class="shop-back" href="{{ route('katalog') }}">Kembali ke katalog</a></p>
+                <p><a class="admin-back-link" href="{{ route('katalog') }}">
+                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                    <span>Kembali ke katalog</span>
+                </a></p>
             </div>
         </article>
     </div>

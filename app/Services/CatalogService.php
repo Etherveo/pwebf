@@ -79,11 +79,13 @@ class CatalogService
 
         $imagePath = $product->image_path;
         if (! empty($data['remove_image']) && $imagePath !== null) {
+            Storage::disk('public')->delete($imagePath);
             Storage::disk('local')->delete($imagePath);
             $imagePath = null;
         }
         if (array_key_exists('image_path', $data) && $data['image_path'] !== null) {
             if ($product->image_path !== null && $product->image_path !== $data['image_path']) {
+                Storage::disk('public')->delete($product->image_path);
                 Storage::disk('local')->delete($product->image_path);
             }
             $imagePath = $data['image_path'];

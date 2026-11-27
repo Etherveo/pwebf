@@ -81,7 +81,7 @@
                                 <td data-label="Pembeli">
                                     <div>
                                         <span class="admin-cell-primary">{{ $order->user?->name }}</span>
-                                        <div class="admin-cell-sub">{{ $order->user?->email }}</div>
+                                        <div class="admin-cell-sub">{{ $order->user?->email }} &bull; {{ $order->fulfillmentLabel() }}</div>
                                     </div>
                                 </td>
                                 <td data-label="Tanggal (WITA)">

@@ -100,13 +100,20 @@
                 </div>
 
                 <div class="admin-field">
-                    <label for="image" class="admin-label">Foto produk (opsional, JPG/PNG/WEBP maks. 5 MB)</label>
-                    <input class="input" type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp">
+                    <label for="image" class="admin-label">Foto produk (opsional, JPG/JPEG/PNG/WEBP maks. 2 MB)</label>
+                    <input class="input" type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp" data-image-preview-input>
+                    <p class="alert-error field-error" data-image-client-error hidden role="alert"></p>
                     @error('image')<p class="alert-error field-error">{{ $message }}</p>@enderror
 
+                    <div class="admin-subcard admin-media-preview" data-image-preview-wrap hidden>
+                        <p class="admin-cell-sub">Pratinjau foto baru sebelum disimpan:</p>
+                        <img class="admin-media-preview-img" data-image-preview alt="Pratinjau foto produk baru">
+                    </div>
+
                     @if ($product?->hasImage())
-                        <div class="admin-subcard" style="margin-top: 0.5rem;">
-                            <p class="admin-cell-sub">Foto saat ini tersimpan (<a class="admin-cell-link" href="{{ $product->imageUrl() }}" target="_blank" rel="noopener">Lihat foto</a>)</p>
+                        <div class="admin-subcard admin-media-preview">
+                            <p class="admin-cell-sub">Foto saat ini (<a class="admin-cell-link" href="{{ $product->imageUrl() }}" target="_blank" rel="noopener">Buka ukuran penuh</a>):</p>
+                            <img class="admin-media-preview-img" src="{{ $product->imageUrl() }}" alt="{{ $product->name }}">
                             <label class="admin-check-label">
                                 <input type="checkbox" name="remove_image" value="1">
                                 <span>Hapus foto produk saat ini</span>

@@ -244,18 +244,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hasAnyFilled = config.data.datasets.some((d) => d.fill !== false);
                 config.data.datasets = config.data.datasets.map((ds, idx) => {
                     const isFilled = ds.fill !== false;
-                    const stroke = idx === 0 ? '#111827' : (ds.borderColor || '#6B7280');
+                    const stroke = idx === 0 ? '#33200F' : (ds.borderColor || '#9A4D18');
                     return {
-                        borderWidth: idx === 0 ? 2 : 1.75,
+                        borderWidth: idx === 0 ? 2.25 : 1.75,
                         borderDash: hasAnyFilled && !isFilled && idx > 0 ? [5, 4] : undefined,
-                        pointRadius: 2.5,
+                        pointRadius: 3,
                         pointHoverRadius: 5,
-                        pointBackgroundColor: '#FFFFFF',
+                        pointBackgroundColor: '#FFFDF9',
                         pointBorderColor: stroke,
                         pointBorderWidth: 1.75,
                         ...ds,
                         borderColor: ds.borderColor && !ds.borderColor.includes('6655F5') ? ds.borderColor : stroke,
-                        backgroundColor: isFilled ? 'rgba(17, 24, 39, 0.08)' : 'transparent',
+                        backgroundColor: isFilled ? 'rgba(51, 32, 15, 0.08)' : 'transparent',
                     };
                 });
             }
@@ -265,8 +265,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 borderSkipped: false,
                 ...ds,
                 backgroundColor: Array.isArray(ds.backgroundColor)
-                    ? ds.backgroundColor.map((c) => (typeof c === 'string' && c.includes('102, 85, 245') ? '#6B7280' : c))
-                    : (ds.backgroundColor && String(ds.backgroundColor).includes('102, 85, 245') ? '#111827' : ds.backgroundColor),
+                    ? ds.backgroundColor.map((c) => (typeof c === 'string' && c.includes('102, 85, 245') ? '#735337' : c))
+                    : (ds.backgroundColor && String(ds.backgroundColor).includes('102, 85, 245') ? '#33200F' : ds.backgroundColor),
             }));
         }
 
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     usePointStyle: true,
                     boxWidth: 8,
                     padding: 16,
-                    color: '#111827',
+                    color: '#33200F',
                     font: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '600' },
                     ...(config.options.plugins.legend.labels || {}),
                 },
@@ -286,9 +286,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         config.options.plugins.tooltip = {
-            backgroundColor: '#111827',
-            titleColor: '#FFFFFF',
-            bodyColor: '#F3F4F6',
+            backgroundColor: '#33200F',
+            titleColor: '#FDF6EE',
+            bodyColor: '#E2CEB8',
             titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: '700' },
             bodyFont: { family: "'Inter', sans-serif", size: 12 },
             padding: 10,
@@ -310,11 +310,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const axisTickStyle = {
-            color: '#6B7280',
+            color: '#735337',
             font: { family: "'Inter', sans-serif", size: 11 },
         };
         const axisGridStyle = {
-            color: '#E5E7EB',
+            color: '#D8C3AC',
             drawTicks: false,
         };
 
@@ -340,5 +340,117 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         new Chart(canvas, config);
+    });
+
+    // Pratinjau foto produk dan validasi ukuran maks. 2 MB sebelum form Admin dikirim
+    const MAX_PRODUCT_IMAGE_BYTES = 2 * 1024 * 1024;
+    document.querySelectorAll('[data-image-preview-input]').forEach((input) => {
+        const container = input.closest('.admin-field');
+        const wrap = container?.querySelector('[data-image-preview-wrap]');
+        const img = container?.querySelector('[data-image-preview]');
+        const clientError = container?.querySelector('[data-image-client-error]');
+        const form = input.closest('form');
+        if (!wrap || !img) return;
+
+        let activeUrl = null;
+        const resetPreview = () => {
+            if (activeUrl) {
+                URL.revokeObjectURL(activeUrl);
+                activeUrl = null;
+            }
+            img.removeAttribute('src');
+            wrap.hidden = true;
+        };
+
+        const validateFileSize = () => {
+            const file = input.files && input.files[0];
+            if (file && file.size > MAX_PRODUCT_IMAGE_BYTES) {
+                const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+                if (clientError) {
+                    clientError.textContent = `Ukuran foto (${sizeMb} MB) melebihi batas maksimal 2 MB. Pilih atau kompres foto di bawah 2 MB.`;
+                    clientError.hidden = false;
+                }
+                resetPreview();
+                return false;
+            }
+            if (clientError) {
+                clientError.textContent = '';
+                clientError.hidden = true;
+            }
+            return true;
+        };
+
+        input.addEventListener('change', () => {
+            resetPreview();
+            if (!validateFileSize()) return;
+            const file = input.files && input.files[0];
+            if (!file || !file.type.startsWith('image/')) {
+                return;
+            }
+            activeUrl = URL.createObjectURL(file);
+            img.src = activeUrl;
+            wrap.hidden = false;
+        });
+
+        form?.addEventListener('submit', (e) => {
+            if (!validateFileSize()) {
+                e.preventDefault();
+                input.focus();
+            }
+        });
+    });
+
+    // Estimasi ongkos kirim & total progresif di Checkout (kalkulasi final tetap di server)
+    document.querySelectorAll('[data-checkout-form]').forEach((form) => {
+        const subtotalIdr = Number(form.dataset.subtotalIdr || 0);
+        const fulfillmentRadios = form.querySelectorAll('input[name="fulfillment_method"]');
+        const courierSelect = form.querySelector('#courier_code');
+        const boxPickup = document.getElementById('box-pickup');
+        const boxDelivery = document.getElementById('box-delivery');
+        const shippingRow = document.getElementById('summary-shipping-row');
+        const shippingLabel = document.getElementById('summary-shipping-label');
+        const shippingCostEl = document.getElementById('summary-shipping-cost');
+        const totalEl = document.getElementById('summary-total-value');
+        const totalLabelEl = document.getElementById('summary-total-label');
+        const noteEl = document.getElementById('summary-shipping-note');
+        const fmtRp = (val) => 'Rp ' + Number(val || 0).toLocaleString('id-ID');
+
+        const syncCheckoutSummary = () => {
+            const selected = form.querySelector('input[name="fulfillment_method"]:checked')?.value || 'pickup';
+            const isDelivery = selected === 'delivery';
+            if (boxPickup) boxPickup.hidden = isDelivery;
+            if (boxDelivery) boxDelivery.hidden = !isDelivery;
+
+            let shippingIdr = 0;
+            let courierName = '';
+            if (isDelivery && courierSelect) {
+                const opt = courierSelect.options[courierSelect.selectedIndex];
+                shippingIdr = Number(opt?.dataset?.cost || 0);
+                courierName = opt?.dataset?.label || '';
+            }
+
+            if (shippingRow && shippingLabel && shippingCostEl) {
+                shippingRow.hidden = false;
+                shippingLabel.textContent = isDelivery
+                    ? `Ongkos kirim${courierName ? ' (' + courierName + ')' : ''}`
+                    : 'Pengambilan di toko';
+                shippingCostEl.textContent = fmtRp(shippingIdr);
+            }
+            if (totalEl) {
+                totalEl.textContent = fmtRp(subtotalIdr + shippingIdr);
+            }
+            if (totalLabelEl) {
+                totalLabelEl.textContent = isDelivery ? 'Perkiraan Total:' : 'Total Tagihan:';
+            }
+            if (noteEl) {
+                noteEl.textContent = isDelivery
+                    ? 'Estimasi sudah termasuk ongkos kirim kurir terpilih; total final dihitung ulang di server.'
+                    : 'Ambil di toko bebas ongkos kirim (Rp 0); total final dihitung di server.';
+            }
+        };
+
+        fulfillmentRadios.forEach((radio) => radio.addEventListener('change', syncCheckoutSummary));
+        courierSelect?.addEventListener('change', syncCheckoutSummary);
+        syncCheckoutSummary();
     });
 });

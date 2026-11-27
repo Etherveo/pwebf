@@ -102,13 +102,18 @@
                 </section>
             </div>
 
-            <aside class="card admin-panel" aria-label="Pintasan akun">
+            <aside class="card admin-panel buyer-summary-card" aria-label="Pintasan akun">
                 <h2 class="admin-section-title">Pintasan Akun</h2>
                 <p class="admin-hint">Akses cepat ke aktivitas belanja Anda di {{ config('store.name') }}.</p>
-                <div class="admin-form-actions" style="flex-direction: column; align-items: stretch;">
-                    <a class="btn-secondary" href="{{ route('pesanan.index') }}">Riwayat Pesanan</a>
-                    <a class="btn-secondary" href="{{ route('pembayaran.index') }}">Riwayat Pembayaran</a>
-                    <a class="btn-secondary" href="{{ route('keranjang.index') }}">Lihat Keranjang</a>
+                <div class="profil-status-box">
+                    <strong>Kelengkapan Akun</strong>
+                    <span>Profil: {{ $user->phone ? 'Lengkap (telepon tersimpan)' : 'Belum ada nomor telepon' }}</span>
+                    <span>Alamat: {{ $address ? 'Tersimpan (' . $address->city . ')' : 'Belum tersimpan' }}</span>
+                </div>
+                <div class="profil-shortcuts-stack">
+                    <a class="btn-secondary buyer-cta-block" href="{{ route('pesanan.index') }}">Riwayat Pesanan</a>
+                    <a class="btn-secondary buyer-cta-block" href="{{ route('pembayaran.index') }}">Riwayat Pembayaran</a>
+                    <a class="btn-secondary buyer-cta-block" href="{{ route('keranjang.index') }}">Lihat Keranjang</a>
                 </div>
             </aside>
         </div>
